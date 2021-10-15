@@ -1,0 +1,1134 @@
+	.TITLE	SNDAUD	;AUDIO SOUND GENERATOR
+	.INCLUDE SNDCMN
+				;---
+				;4 POKEYS, OFFSET BY 32. FOR EASY INDEXING
+P.BASE	==1800
+P.SND	==P.BASE+0		;8 HARDWARE SOUND CHANNELS
+P.SNDZ	==P.SND+<8*2>
+P.BGN1	==P.BASE+0F+18		;BEGIN POKEY1=CYCLE 0 TO 3
+P.BGN2	==P.BGN1+8		;BEGIN POKEY2 (SKCTL)
+P.ACT1	==P.BASE+8+18		;AUDIO CONTROL,1(AUDCTL)
+P.ACT2	==P.ACT1+8		;AUDIO CONTROL,2
+P.POT	==P.BASE+0		;READ POT VALUES
+P.POT0	==P.POT
+P.POT1	==P.POT+1
+P.POTZ	==P.POT1+1
+P.PTG1	==P.BASE+0B+18		;POTGO,1
+P.PTG2	==P.PTG1+8		;POTGO,2
+P.RND1	==P.BASE+0A+18		;RANDOM BYTE,1
+P.RND2	==P.RND1+8		;RANDOM BYTE,2
+P.PSW1	==P.BASE+8+18		;ALLPOT--POT SWITCHES
+P.PSW2	==P.PSW1+8
+;
+	.PAGE
+	.SBTTL	RAM
+	.ASECT
+	.=AUDRAM
+				;AUDNEW, AUDDO-SOUND GENERATORS
+AU.SHF::.BLKB 1			;BITS FOR USED CHANNELS
+AU.BLK::			;
+AU$PNT	==0			;POINTER INTO TAUBLK, CHANNEL INFO
+AU$TMR	==2			;TIMER COUNT TO NEXT PHRASE
+AU$RPT	==3			;COUNTER FOR REPEATING PHRASES
+AU$SND	==4			;CURRENT OUTPUT PHRASE VALUE
+AU$IZ	==5			;SIZE OF SET PER CHANNEL
+AU$EQ	==16.			;# OF SETS IN THIS SEQUENCE
+	.BLKB AU$IZ*AU$EQ
+				;---
+	.PAGE
+
+	.CSECT AUD
+				;===
+
+				;GLOBALS
+AU$IZ	==5
+				;---
+	.GLOBB AU$EQ
+	.GLOBB AU$IZ
+	.GLOBB AU$PNT
+	.GLOBB AU$RPT
+	.GLOBB AU$SND
+	.GLOBB AU$TMR
+	.GLOBL AU.BLK
+	.GLOBL AU.SHF
+	.GLOBL P.BASE
+				;===
+	.PAGE
+TA$RPT	=0			;REPEAT PHRASE N TIMES
+TA$TMR	=1			;EACH PHRASE LASTS M BEATS
+TA$SND	=2			;STARTING VALUE FOR FIRST PHRASE
+TA$INC	=3			;MODIFIES SND FOR SUBSEQUENT PHRASES
+TA$IZ	=4			;LENGTH OF PHRASE BLOCK
+
+	.SBTTL SOUND TABLES
+	.SBTTL	MACROS
+.MACRO .SZ			;END OF SOUND SEQUENCE
+	.BYTE 0
+	.ENDM
+.MACRO .S	A1,A2,A3,A4		;SOUND VALUES
+	.BYTE 'A1','A2','A3','A4'	;RRT,TMR,SND,INC
+	.ENDM
+
+	.CSECT SNDPTR
+SNDPTR:
+	.CSECT AUD
+.MACRO	OFFSET,A1
+	...B=0
+	...A=.			;SAVE BYTE FOR VALID CHANNEL FLAGS
+'A1'0:				;POINTER LABEL
+	.CSECT SNDPTR
+	.WORD ...A
+	.CSECT AUD
+	.=.+1
+	.IRPC B1,<12345678>
+	.IF DF,'A1''B1'F	;IF FREQ LABLE EXISTS
+	.WORD 'A1''B1'F		;THEN POINT TO FREQ AND CONTROL
+	.WORD 'A1''B1'C
+	...B=...B*2+1		;FLAG CHANNEL AS ACTIVE
+	.IFF
+	...B=...B*2		;ELSE CHANNEL IS VOID
+	.ENDC
+	.ENDR
+				;RECORD CHANNEL ACTIVE FLAGS
+	...C=.			;MOVE TO HEAD OF BLOCK
+	.=...A
+	.BYTE ...B		;RECORD CHANNEL ACTIVE FLAGS
+	.=...C			;RETURN TO END OF BLOCK
+	.ENDM
+	.PAGE
+	.SBTTL	CHANNEL CONTROL BLOCKS
+				;RPT,TMR,SND,INC
+
+XL6F:	.S 1,2,6,0			;XWING LASERS, CHANGE SPIT AT
+   	.S 2,2,21.,4			;BEGINNING
+   	.S 2,2,19.,-13.
+   	.S 1,2,17.,0
+   	.S 1,18.,1,0
+   	.S 21.,2,9,1
+	.S 1,2,29.,0
+	.S 81,2,31.,1
+XL6C:	.S 4,2,21,1
+	.S 2,2,26,2
+	.S 1,2,2B,0
+	.S 1,16.,20,0
+	.S 1,6,2B,0
+	.S 2,10.,2A,0FF
+	.S 2,12.,28,0FF
+	.S 1,14.,26,0
+	.S 1,16.,25,0
+	.S 1,18.,24,0
+	.S 1,20.,23,0
+	.S 1,38.,22,0
+	.S 1,50.,21,0
+XLZ6F:
+XLZ6C:
+   	.SZ
+XL7F:	.S 1,18.,27.,0
+   	.S 2,2,21.,4
+   	.S 2,2,12.,5
+   	.S 1,2,0,0
+	.S 1,18.,10.,0
+	.S 20.,2,10.,1
+	.S 1,2,29.,0
+	.S 43.,2,31.,1
+	.S 8,2,55.,0FF
+	.S 109.,2,31.,1
+XL7C:	.S 1,16.,40,0
+	.S 6,2,41,2
+	.S 1,18.,40,0
+	.S 3,8,8B,0FF
+	.S 2,10.,88,0FF
+	.S 1,12.,86,0
+	.S 1,14.,85,0
+	.S 1,22.,84,0
+	.S 1,208.,83,0
+	.S 1,34.,82,0
+	.S 1,28.,81,0
+XLZ7F:
+XLZ7C:
+   	.SZ
+PB3F:	.S 3,10.,12.,1			;PASS-BY 1ST CHANNEL
+   	.S 2,8,15.,1			; MAKE GRUNGIER
+   	.S 1,6,17.,0
+	.S 1,6,18.,0			;THIS WAS PM3F,MEDIUM LENGTH PASSBY
+  	.S 3,4,17.,-1
+PS3F:	.S 6,2,14.,0FF			;SHORT PASSBY
+	.S 59.,2,10.,1
+PB3C:	.S 1,26.,81,0			;PASSBY
+	.S 1,16.,82,0
+	.S 1,6,83,0
+	.S 1,4,84,0
+	.S 1,6,85,0
+	.S 2,4,86,1
+	.S 8,2,88,1
+	.S 1,2,8F,0
+	.S 1,4,8E,0
+	.S 1,6,8D,0
+	.S 2,4,8C,-1
+	.S 2,6,8A,-1
+	.S 7,8,88,0FF
+	.S 1,28.,81,0
+PBZ3F:
+PBZ3C:	.SZ
+PS3C:	.S 2,2,81,1			;SHORT PASSBY 1ST CHANNEL CONTROL
+	.S 2,2,84,3
+	.S 1,2,8B,0
+	.S 2,4,8F,0FF
+	.S 1,6,8D,0
+	.S 2,4,8C,0FF
+	.S 2,6,8A,0FF
+	.S 7,8,88,0FF
+	.S 1,28.,81,0
+	.SZ
+PB4F:	.S 1,52.,35.,0			;PASSBY 2ND CHANNEL FREQ
+	.S 9,2,35.,0FF			;THIS WAS PM4F, 
+					;MEDIUM PASSBY 2ND CHANNEL FREQ	
+PS4F:	.S 6,2,26.,0FF			;SHORT PASSBY 2ND CHANNEL FREQ
+	.S 23.,2,22.,1
+PB4C:	.S 1,52.,0C0,0
+	.S 15.,2,0C1,1
+	.S 1,2,0CF,0
+	.S 2,4,0CE,-1
+	.S 1,2,0CC,0
+	.S 1,4,0CB,0
+	.S 1,2,0CA,0
+	.S 1,4,0C9,0
+	.S 1,2,0C8,0
+	.S 1,4,0C7,0
+	.S 5,2,0C6,0FF
+	.S 1,2,0C2,0
+	.S 1,4,0C1,0
+PBZ4F:
+PBZ4C:	.SZ
+PS4C:	.S 2,2,0C1,1			;SHORT PASSBY 2ND CHANNEL CONTROL
+	.S 2,2,0C4,3
+	.S 1,2,0CB,0
+	.S 3,4,0CF,0FF
+	.S 1,2,0CC,0
+	.S 1,4,0CB,0
+	.S 1,2,0CA,0
+	.S 1,4,0C9,0
+	.S 1,2,0C8,0
+	.S 1,4,0C7,0
+	.S 4,2,0C6,0
+	.S 2,4,0C2,0FF
+	.SZ
+;SH4F:
+SH6F:
+SH8F:	.S 1,56.,3,0			;SHIELD
+;SH6F:	.S 1,56.,1,0
+;SH4C:
+SH6C:
+SH8C:	.S 1,10.,41,0
+	.S 1,8,42,0
+	.S 1,6,43,0
+	.S 1,4,44,0
+	.S 8,2,45,1
+	.S 2,1,4D,1
+	.S 1,10.,4F,0
+	.SZ
+PF4F:	.S 8,2,56,0F8			;TOWER PFFFTS
+PF4C:	.S 3,2,81,1
+  	.S 2,2,86,4
+   	.S 3,2,8C,1
+   	.SZ
+TL3F:	.S 2,2,35.,-1			;TOWER LASER, TOO POP-TOPPY
+   	.S 1,10.,34.,0
+	.S 47.,2,2,1
+TL3C:	.S 1,4,2F,0
+	.S 1,10.,20,0
+	.S 3,2,2F,0FF
+	.S 3,4,2C,0FF
+	.S 3,6,29,0FF
+	.S 2,8,26,0FF
+	.S 1,4,24,0
+	.S 2,2,4,20
+	.S 2,10.,23,0FF
+	.S 1,12.,21,0
+	.SZ
+SX5F:	.S 5,2,22.,1			;SMALL EXPLOSION
+	.S 3,2,25.,0FF	
+	.S 5,2,22.,1
+	.S 3,2,25.,0FF	
+	.S 5,2,22.,1
+	.S 3,2,25.,0FF	
+	.S 5,2,22.,1
+	.S 3,2,25.,0FF	
+	.S 5,2,22.,1
+	.S 3,2,25.,0FF	
+	.S 5,2,22.,1
+	.S 3,2,25.,0FF	
+	.S 3,2,22.,1
+SX5C:	.S 1,4,0F,0
+	.S 1,6,0,0
+	.S 3,10.,0F,0FF
+	.S 9,4,0C,0FF
+	.S 1,6,3,0
+	.S 1,8,2,0
+	.S 1,12.,1,0
+	.SZ
+;DP1F:	.S 5,2,22.,1			;DEATH STAR PRELIMINARY EXPLOSION
+;	.S 3,2,25.,0FF	
+;	.S 5,2,22.,1
+;	.S 3,2,25.,0FF	
+;	.S 5,2,22.,1
+;	.S 3,2,25.,0FF	
+;	.S 5,2,22.,1
+;	.S 3,2,25.,0FF	
+;	.S 5,2,22.,1
+;	.S 3,2,25.,0FF	
+;	.S 5,2,22.,1
+;	.S 3,2,25.,0FF	
+;	.S 5,2,22.,1
+;	.S 3,2,25.,0FF	
+;	.S 5,2,22.,1
+;	.S 3,2,25.,0FF	
+;	.S 5,2,22.,1
+;	.S 3,2,25.,0FF	
+;	.S 5,2,22.,1
+;	.S 3,2,25.,0FF	
+;	.S 5,2,22.,1
+;	.S 3,2,25.,0FF	
+;	.S 5,2,22.,1
+;	.S 3,2,25.,0FF	
+;	.S 5,2,22.,1
+;	.S 3,2,25.,0FF	
+;	.S 5,2,22.,1
+;	.S 3,2,25.,0FF	
+;	.S 4,2,22.,1
+;DP1C:	.S 2,8,0F,-0F
+;	.S 2,2,0F,0FF
+;	.S 1,4,0D,0
+;	.S 1,6,0C,0
+;	.S 1,8,0B,0
+;	.S 1,10.,0A,0
+;	.S 1,12.,9,0
+;	.S 1,16.,8,0
+;	.S 1,18.,7,0
+;	.S 1,20.,6,0
+;	.S 1,22.,5,0
+;	.S 1,24.,4,0
+;	.S 1,26.,3,0
+;	.S 1,28.,2,0
+;	.S 1,18.,1,0
+;	.SZ
+DF1F:	.S 2,144.,70.,0
+DF2F:	.S 2,144.,71.,0
+DF3F:	.S 2,144.,72.,0
+DF4F:	.S 2,144.,73.,0
+DF5F:	.S 2,144.,75.,0
+DF6F:	.S 2,144.,76.,0
+DF7F:	.S 2,144.,77.,0
+DF8F:	.S 2,144.,78.,0	 			;DEATH STAR FINAL EXPLOSION
+DF1C:
+DF2C:
+DF3C:
+DF4C:
+DF5C:
+DF6C:
+DF7C:
+DF8C:	.S 1,10.,4F,0
+	.S 1,8,40,0
+	.S 1,4,4F,0
+	.S 1,6,4E,0
+	.S 1,8,4D,0
+	.S 1,10.,4C,0
+	.S 1,12.,4B,0
+	.S 1,14.,4A,0
+	.S 1,16.,49,0
+	.S 1,18.,48,0
+	.S 1,20.,47,0
+	.S 1,22.,46,0
+	.S 1,24.,45,0
+	.S 1,26.,44,0	
+	.S 1,28.,43,0
+	.S 1,30.,42,0
+	.S 1,32.,41,0
+	.SZ
+CR3F:
+CR8F:				;CRASH INTO BRIDGE OR TOWER
+	.S 1,90.,65.,0
+CR6F:
+	.S 1,90.,62.,0
+CR3C:
+CR6C:
+CR8C:		
+	.S 1,26.,4F,0
+	.S 2,2,4E,0FF
+	.S 9,4,4C,0FF
+	.S 1,6,43,0
+	.S 1,8,42,0
+	.S 1,10.,41,0
+	.SZ
+
+SS8F:	.S 1,14.,8,0		;SHOOTING ENEMY SHOTS
+SS8C:	
+	.S 1,2,41,0
+	.S 7,1,42,1
+	.S 3,1,4A,2
+	.S 1,2,4F,0
+	.SZ
+;BLZ1C:
+;BLZ1F:
+;BLZ2F:
+;BLZ2C:	.SZ
+BL1F:				;PLAYER'S LASER BLAST
+   	.S 50.,1,55.,4
+   	.S 1,2,255.,0
+BL1C:
+   	.S 1,12.,0A9,0
+   	.S 1,10.,0A8,0
+   	.S 1,8,0A7,0
+   	.S 1,6,0A6,0
+   	.S 1,4,0A5,0
+   	.S 5,2,0A4,0FF
+   	.S 1,2,0A1,0
+   	.SZ
+BL2F:	.S 1,8,5,0
+   	.S 44.,1,55.,4
+BL2C:	.S 1,8,47,0
+	.S 1,22.,0A7,0
+   	.S 1,6,0A6,0
+   	.S 1,4,0A5,0
+   	.S 5,2,0A4,0FF
+   	.S 1,2,0A1,0
+   	.SZ
+PH1F:				;PORT HOLE SHOT
+   	.S 5,1,35.,1
+   	.S 13.,1,42.,2
+   	.S 9,1,69.,3
+   	.S 8,1,97.,4
+   	.S 4,1,131.,5
+   	.S 5,1,153.,6
+   	.S 4,1,184.,7
+   	.S 4,1,213.,9
+PH2F:
+   	.S 17.,1,45.,2
+   	.S 10.,1,79.,3
+   	.S 8,1,110.,4
+   	.S 5,1,144.,5
+   	.S 7,1,170.,6
+   	.S 3,1,215.,7
+   	.S 2,1,237.,8
+PH3F:
+   	.S 4,1,51.,1
+   	.S 9,1,56.,2
+   	.S 12.,1,75.,3
+   	.S 7,1,110.,4
+   	.S 8,1,138.,5
+   	.S 5,1,177.,6
+   	.S 7,1,207.,7
+PH7F:
+   	.S 3,1,60.,1
+   	.S 10.,1,64.,2
+   	.S 13.,1,85.,3
+   	.S 9,1,125.,4
+   	.S 8,1,162.,5
+   	.S 6,1,203.,6
+   	.S 3,1,241.,7
+PH1C:
+PH2C:
+PH3C:
+PH7C:
+   	.S 3,6,0AF,0FF
+   	.S 3,6,0AB,0FE
+   	.S 2,8,0A4,0FD
+   	.SZ
+
+TH3F:	.S 192.,1,236.,-1		;THRUSTING DOWN TO DEATH STAR
+	.S 36.,2,44.,-1
+	.S 6,2,10.,1
+	.S 3,4,15.,1
+	.S 2,6,18.,-1
+	.S 2,8,16.,-1
+	.S 2,10.,14.,-1
+	.S 1,14.,12.,0
+TH3C:	.S 1,188.,82,0
+	.S 1,8,83,0
+	.S 1,8,84,0
+	.S 4,8,85,1
+	.S 2,6,89,1
+	.S 2,4,8B,1
+	.S 1,6,8D,0
+	.S 2,4,8E,1
+	.S 7,2,8E,-1
+	.S 2,4,87,-1
+	.S 1,6,85,0
+	.S 1,4,84,0
+	.S 1,6,83,0
+	.S 1,16.,82,0
+	.S 1,26.,81,0
+	.SZ
+TH4F:	.S 160.,1,229.,-1
+	.S 48.,2,69.,-1
+	.S 14.,2,22.,1
+	.S 1,66.,22.,0
+TH4C:	.S 1,160.,0C1,0
+	.S 7,8,0C1,1
+	.S 2,6,0C9,1
+	.S 2,4,0CB,1
+	.S 1,6,0CD,0
+	.S 2,4,0CE,1
+	.S 14.,2,0CE,-1
+	.S 1,66.,0C0,0
+	.SZ
+YEA1F:	.S 30.,1,81.,-2		;YAY/YEA/YAAAAY/THIS TEST IS GOOD
+
+NAY1F:	.S 30.,1,162.,2		;NAY/NO WAY JOSE'/FORGET IT/FUCKED UP
+
+YEA1C:
+NAY1C:	.S 1,30.,0AA,0
+	.SZ
+
+TST1F:				;TEST CH. 1, POKEY 1
+TST5F:	.S 8,50.,102.,0		
+
+TST1C:	.S 1,40.,0AA,0
+	.SZ
+
+TST2F:
+TST6F:	.S 8,50.,91.,0
+
+TST2C:	.S 2,40.,0A0,0A
+	.SZ
+
+TST3F:
+TST7F:	.S 8,50.,81.,0
+
+TST3C:	.S 1,80.,0A0,0
+	.S 1,40.,0AA,0
+	.SZ
+
+TST4F:
+TST8F:	.S 8,50.,72.,0
+
+TST4C:	.S 1,120.,0A0,0
+	.S 1,40.,0AA,0
+	.SZ
+
+TST5C:	.S 1,160.,0A0,0
+	.S 2,15.,0AA,-0A
+	.S 2,15.,0AA,-0A
+	.SZ
+
+TST6C:	.S 1,220.,0A0,0
+	.S 2,15.,0AA,-0A
+	.S 2,15.,0AA,-0A
+	.SZ
+
+TST7C:	.S 2,140.,0A0,0
+	.S 2,15.,0AA,-0A
+	.S 2,15.,0AA,-0A
+	.SZ
+
+TST8C:	.S 2,170.,0A0,0
+	.S 2,15.,0AA,-0A
+	.S 2,15.,0AA,-0A
+	.SZ
+
+VIBOFF::			;VIBRATO OFF ALL SOUNDS AFTER THIS
+
+RY5F:	.S 1,240.,12.,0		;~1.6 SEC SILENCE
+	.S 1,9,12.,0		;R2 ECEGECEGEC TONES, COMPRESS EVENTUALLY?
+   	.S 1,42.,15.,0
+   	.S 1,5,12.,0
+   	.S 1,21.,20.,0
+   	.S 1,12.,12.,0
+   	.S 1,17.,15.,0
+   	.S 1,13.,12.,0
+   	.S 1,21.,20.,0
+   	.S 1,12.,12.,0
+   	.S 1,34.,15.,0
+   	.S 1,13.,23.,0		;R2 YES
+	.S 1,7.,21.,0
+	.S 2,1,20.,0FF
+	.S 1,3,21.,0
+	.S 2,1,19.,0FF
+	.S 2,1,16.,0FE
+	.S 2,1,13.,0FF
+	.S 1,2,11.,0
+	.S 3,1,9,0FF
+	.S 1,14.,6,0
+	.S 1,1,7,0
+	.S 1,2,8,0
+	.S 6,1,9,1
+	.S 1,2,16.,0
+	.S 1,1,18.,0
+RY5C:	.S 1,240.,0A0,0			;1.6 SEC. SILENCE
+	.S 1,5,0AA,0
+	.S 1,4,0,0
+	.S 1,10.,0AB,0
+	.S 1,32.,0,0
+	.S 1,5,0AB,0
+	.S 1,10.,0AC,0
+	.S 1,11.,0,0
+	.S 1,6,0AB,0
+	.S 1,6,0,0
+	.S 1,9,0AC,0
+	.S 1,8,0,0
+	.S 1,8,0AA,0
+	.S 1,5,0,0
+	.S 1,10.,0AC,0
+	.S 1,11.,0,0
+	.S 1,6,0AB,0
+	.S 1,6,0,0
+	.S 1,9,0AC,0
+	.S 1,25.,0,0
+	.S 3,1,0A2,1		;R2 YES
+	.S 4,1,0A6,1
+	.S 3,1,0A8,0FF
+	.S 1,2,0A5,0
+	.S 2,1,0A7,3
+	.S 1,4,0AC,0
+	.S 3,1,0AB,0FD
+	.S 2,2,0A3,-1
+	.S 2,1,0A3,6
+	.S 1,6,0AD,0
+	.S 1,1,0AC,0
+	.S 1,2,0AA,0
+	.S 1,1,0A9,0
+	.S 1,8,0A8,0
+	.S 1,6,0A7,0
+	.S 1,5,0A8,0
+	.S 1,2,0A9,0
+	.S 1,1,0A8,0
+	.S 3,1,0A6,0FF
+	.SZ
+RD5F:	.S 1,192.,18.,0			;1.5 SEC SILENT FOR LUKE TO SAY
+					;"R2, TRY & INCREASE THE POWER"
+	.S 1,1,18.,0			;R2 DONE
+	.S 1,6,19.,0
+   	.S 1,10.,20.,0
+   	.S 1,24.,11.,0
+   	.S 1,14.,24.,0
+   	.S 1,4,21.,0
+   	.S 1,4,15.,0
+   	.S 1,5,11.,0
+   	.S 1,10.,5,0
+   	.S 2,1,14.,3
+   	.S 6,1,19.,1
+   	.S 1,1,23.,0
+   	.S 1,2,24.,0
+   	.S 1,32.,22.,0
+   	.S 2,1,63.,-6
+   	.S 3,1,54.,-2
+   	.S 2,1,47.,-4
+   	.S 2,1,41.,-1
+   	.S 3,1,38.,-1
+   	.S 1,1,34.,0
+   	.S 3,1,34.,-2
+   	.S 5,1,29.,-1
+   	.S 1,4,24.,0
+	.S 1,2,23.,0
+	.S 1,1,22.,0
+	.S 1,4,21.,0
+	.S 1,1,20.,0
+   	.S 2,3,19.,-1
+   	.S 1,2,17.,0
+   	.S 2,1,16.,1
+   	.S 1,6,16.,0
+   	.S 1,4,15.,0
+   	.S 1,21.,14.,0
+   	.S 1,14.,19.,0
+	.S 1,3,11.,0
+	.S 1,13.,16.,0
+	.S 1,5,16.,0
+	.S 1,14.,9,0
+	.S 1,12.,19.,0
+RD5C:	.S 1,192.,0A0,0		;1.5 SEC OF SILENCE
+	.S 1,1,0A8,0		;R2D2 DONE
+	.S 1,7,0AA,0
+	.S 1,9,0A0,0
+   	.S 2,12.,0A8,-8
+   	.S 1,6,0AD,0
+	.S 1,3,0A0,0
+	.S 1,5,0AD,0
+	.S 1,1,0AA,0
+	.S 1,3,0A0,0
+	.S 1,4,0AA,0
+	.S 1,1,0A9,0
+   	.S 1,14.,0A0,0
+   	.S 3,1,0AA,1
+   	.S 1,6,0AD,0
+	.S 1,2,0AC,0
+	.S 1,1,0A5,0
+   	.S 1,31.,0A0,0
+   	.S 1,1,0A6,0
+	.S 1,2,0A7,0
+	.S 1,4,0A8,0
+	.S 1,5,0A9,0
+	.S 1,2,0AA,0
+   	.S 2,1,0AB,1
+   	.S 1,1,0AB,0
+   	.S 1,2,0AC,0
+   	.S 2,1,0AB,-1
+   	.S 1,32.,0A9,0
+	.S 1,12.,0A8,0
+	.S 1,9,0A0,0
+	.S 1,14.,0AA,0
+	.S 1,3,0A9,0
+	.S 1,13.,0AA,0
+	.S 1,5,0A0,0
+   	.S 1,26.,0A6,0
+   	.SZ
+RC5F:				;R2 COOKED
+	.S 2,1,59.,-40.
+	.S 1,1,13.,0
+	.S 3,1,7,0FE
+	.S 1,7,4,0
+	.S 2,2,5,1
+	.S 1,1,8,0
+	.S 1,3,10.,0
+	.S 2,1,12.,1
+	.S 1,2,14.,0
+	.S 1,4,13.,0
+	.S 2,2,14.,0FF
+	.S 1,1,12.,0
+	.S 1,3,13.,0
+	.S 1,1,112.,0
+	.S 1,7,16.,0
+	.S 3,1,9,0FE
+	.S 2,1,4,0FF
+	.S 2,1,3,2		;R2COOKED23
+	.S 1,2,7,0
+	.S 1,9,3,0
+	.S 1,3,7,0
+	.S 2,1,5,3
+	.S 2,1,12.,5
+	.S 2,1,24.,0FD
+	.S 1,2,10.,0
+	.S 2,1,16.,2
+	.S 1,2,29.,0
+	.S 2,1,37.,0FC
+	.S 2,1,25.,0F7
+	.S 1,1,12.,0
+	.S 1,4,10.,0
+	.S 1,5,9,0
+	.S 1,1,11.,0
+	.S 1,2,12.,0
+	.S 2,1,11.,0FE
+	.S 2,1,8,8
+	.S 2,1,42.,3
+	.S 1,1,41.,0
+	.S 1,5,40.,0
+	.S 2,1,38.,26.
+	.S 1,1,27.,0		;R2COOKEDB01
+	.S 3,1,13.,0FF
+	.S 1,6,10.,0
+	.S 1,3,11.,0
+	.S 2,1,12.,1
+	.S 1,5,14.,0
+	.S 3,1,15.,0FF
+	.S 1,2,11.,0
+	.S 2,5,9,0FF
+	.S 2,1,10.,1
+	.S 2,1,14.,2
+	.S 1,1,22.,0
+	.S 2,2,25.,-15.		;R2COOKEDB23
+	.S 2,1,13.,0FC
+	.S 2,1,12.,1
+	.S 1,1,17.,0
+	.S 1,2,18.,0
+RC5C:				;R2D2 COOKED
+	.S 2,1,0A1,1
+	.S 4,1,0A5,0FF
+	.S 3,1,0A1,1
+	.S 1,3,0A3,0
+	.S 2,1,0A4,1
+	.S 1,1,0A7,0
+	.S 1,11.,0AA,0
+	.S 2,1,0A7,0FA
+	.S 1,10.,0A1,0
+	.S 1,6,0A0,0
+	.S 1,1,0A8,0
+	.S 1,2,0AA,0
+	.S 2,1,0A7,0FB
+	.S 1,5,0A1,0		;R2COOKED23
+	.S 2,2,0A0,1
+	.S 1,3,0A1,0
+	.S 2,2,0A1,0FF
+	.S 2,1,0A1,3
+	.S 1,5,0AA,0
+	.S 2,1,0A5,0FC
+	.S 1,2,0A1,0
+	.S 2,1,0A0,5
+	.S 1,6,0AA,0
+	.S 2,1,0A7,0FF
+	.S 2,1,0A7,2
+	.S 1,5,0AA,0
+	.S 2,1,0A9,0F9
+	.S 1,3,0A1,0
+	.S 3,1,0A2,3
+	.S 1,4,0AA,0
+	.S 3,1,0A8,0FD
+	.S 1,1,0A1,0
+	.S 1,6,0AA,0		;R2COOKEDB01
+	.S 1,2,0A7,0
+	.S 2,1,0A5,0FD
+	.S 1,2,0A1,0
+	.S 2,1,0A1,8
+	.S 1,5,0AA,0
+	.S 2,1,0A4,0FD
+	.S 2,1,0A1,1
+	.S 2,1,0A4,4
+	.S 1,3,0AA,0
+	.S 1,1,0A9,0	
+	.S 1,3,0A7,0
+	.S 1,1,0A9,0
+	.S 1,7,0AA,0
+	.S 2,1,0A8,0FD
+	.S 1,9,0A1,0		;R2COOKEDB23
+	.SZ
+DR5F:				;DEAD R2 A01
+	.S 1,6,8,0
+	.S 1,4,9,0
+	.S 1,2,8,0
+	.S 1,1,9,0
+	.S 1,3,10.,0
+	.S 1,1,11.,0
+	.S 1,2,10.,0
+	.S 1,1,11.,0
+	.S 1,3,10.,0
+	.S 1,1,11.,0
+	.S 2,2,12.,0FF
+	.S 1,3,10.,0
+	.S 1,5,11.,0
+	.S 1,20.,10.,0
+	.S 1,2,11.,0
+	.S 1,1,13.,0
+	.S 1,2,12.,0		;DEAD R2 A23
+	.S 1,4,13.,0
+	.S 1,1,14.,0
+	.S 1,2,15.,0
+	.S 2,1,16.,1
+	.S 1,2,18.,0
+	.S 1,1,20.,0
+	.S 1,5,19.,0
+	.S 1,2,20.,0
+	.S 1,4,19.,0
+	.S 1,2,20.,0
+	.S 1,1,19.,0
+	.S 1,4,18.,0	
+	.S 1,3,17.,0
+	.S 1,2,16.,0
+	.S 1,9,15.,0	
+	.S 1,4,16.,0
+	.S 1,3,17.,0
+	.S 1,5,18.,0
+	.S 1,1,19.,0
+	.S 1,2,35.,0FF		;DEAD R2 B01
+	.S 1,4,33.,0
+	.S 1,3,35.,0
+	.S 1,2,36.,0
+	.S 2,1,37.,1
+	.S 1,2,39.,0
+	.S 1,1,38.,0
+	.S 1,3,37.,0
+	.S 1,2,36.,0
+	.S 1,6,35.,0
+	.S 2,1,34.,0FF
+	.S 2,1,35.,0FF
+	.S 1,3,33.,0
+	.S 2,2,34.,0FF
+	.S 1,1,34.,0
+	.S 1,2,35.,0
+	.S 3,1,36.,1
+	.S 1,4,39.,0
+	.S 2,1,41.,2
+	.S 1,2,46.,0
+	.S 1,1,49.,0
+	.S 1,2,47.,0
+	.S 2,1,51.,6
+	.S 2,1,54.,0FC
+	.S 2,1,44.,6		;DEAD R2 B23
+	.S 2,1,49.,1
+	.S 2,1,48.,2
+	.S 2,1,48.,1
+	.S 1,2,50.,0
+	.S 1,1,51.,0
+	.S 1,3,52.,0
+	.S 1,2,54.,0
+	.S 1,1,56.,0	
+	.S 1,3,55.,0	
+	.S 2,1,56.,0FC
+	.S 1,1,53.,0
+	.S 1,2,64.,0
+	.S 2,1,69.,0FD
+	.S 3,1,53.,8
+	.S 2,1,70.,0FE
+	.S 2,1,64.,2
+	.S 1,4,67.,0
+	.S 2,1,66.,0FE
+	.S 2,1,54.,0FB
+DR5C:				;DEAD R2 A01
+	.S 1,29.,0A1,0
+	.S 1,5,0A2,0
+	.S 1,20.,0A1,0
+	.S 1,2,0A2,0
+	.S 1,3,0A3,0
+	.S 1,3,0A7,0		;DEAD R2 A23
+	.S 2,2,0A8,1
+	.S 1,1,0A8,0
+	.S 1,2,0A9,0
+	.S 2,1,0A8,1
+	.S 1,15.,0AA,0
+	.S 2,1,0A9,0FF
+	.S 2,1,0A6,0FE
+	.S 1,7,0A3,0
+	.S 1,1,0A2,0
+	.S 1,20.,0A1,0
+	.S 1,26.,0AA,0		;DEAD R2 B01
+;	.S 1,1,0A8,0
+;	.S 1,3,0A7,0
+;	.S 1,1,0A8,0
+;	.S 1,3,0A9,0
+;	.S 1,5,0A8,0
+;	.S 1,1,0A9,0
+	.S 1,14.,0A8,0		;DO THIS INSTEAD, SAVE SPACE
+	.S 1,5,0AA,0
+	.S 3,1,0A8,0FF
+	.S 2,1,0A4,0FD
+	.S 2,4,0A1,1
+	.S 1,1,0A2,0
+	.S 1,11.,0A1,0		;DEAD R2 B23
+	.S 3,2,0A2,1
+	.S 4,1,0A5,0FF
+	.S 1,21.,0A1,0
+	.SZ
+
+RS5F:	.S 2,146.,9,0				;2+ SEC. SILENCE
+	.S 1,30.,9,0
+	.S 1,13.,9,0				;R2 SHAVE
+   	.S 1,3,24.,0
+   	.S 2,6.,28.,-4
+   	.S 1,13.,6,0
+	.S 1,24.,9,0
+	.S 1,12.,10.,0
+RS5C:	.S 2,146.,0A0,0				;2+ SEC. SILENCE
+	.S 1,30.,0A0,0
+	.S 1,9.,0AA,0
+	.S 1,4,0A0,0
+	.S 1,19.,0AA,0
+	.S 1,9.,0A0,0
+	.S 1,10.,0AA,0
+	.S 1,14.,0A0,0
+	.S 1,12.,0AA,0
+	.SZ
+
+
+	.PAGE
+	.SBTTL	POINTERS 'XX0'
+				;OFFSET POINTERS
+	OFFSET RY		;R2D2 YES
+	OFFSET RD		;R2D2 DONE
+	OFFSET XL		;X WING LASER
+	OFFSET XLZ		; END X WING LASAR SOUND
+	OFFSET PB		;PASS-BY
+	OFFSET SH		;SHIELD
+	OFFSET PF		;TOWER PFFFTS
+	OFFSET TL		;TOWER LASERS
+	OFFSET SX		;SMALL EXPLOSION
+;	OFFSET DP		;DEATH STAR PRELIMINARY EXPLOSION
+	OFFSET DF		;DEATH STAR FINAL EXPLOSION
+	OFFSET CR		;CRASH INTO BRIDGE OR TOWER
+	OFFSET RC		;R2D2 COOKED
+	OFFSET DR		;DEAD R2D2
+;	OFFSET PM		;THIS WAS MEDIUM PASSBY
+	OFFSET PS		;SHORT PASSBY
+	OFFSET SS		;SHOOT SHOTS
+	OFFSET BL		;PLAYER'S LASER BLAST
+;	OFFSET BLZ		;END PLAYER'S LASER BLAST
+	OFFSET PH		;PORT HOLE SHOT
+	OFFSET RS		;R2 SHAVE
+	OFFSET TH		;THRUSTING DOWN TO DEATH STAR
+	OFFSET PBZ		;END PASSBY SOUND
+	OFFSET YEA		;YAY, TEST SUCCESSFUL
+	OFFSET NAY		;NAY, TEST BIT BIG ONE
+	OFFSET TST		;TEST TONES FOR YOUR LISTENING PLEASURE
+
+	.PAGE
+	.SBTTL SOUND ROUTINES
+	.SBTTL	AUDXXX-REQUEST SOUNDS
+				;---
+AUDRY::				;R2D2 YES
+	LDY #RY0
+	JMP AUDNEW
+AUDRD::				;R2D2 DONE (PHASE COMPLETED SOUND)
+	LDY #RD0
+	JMP AUDNEW	
+				;---
+AUDXL::				;X WING LASER
+	LDY #BL0		;PLAYERS SHOOTING BLAST
+	JMP AUDNEW
+				;---
+;AUDXLZ::			;END X WING LASER
+;	LDY #BLZ0		;END PLAYER'S SHOOTING BLAST
+;	JMP AUDNEW
+				;---
+AUDPB::				;PASS BY
+	LDY #PB0
+	BRA AUDNEW
+				;---
+AUDPBZ::			;END PASS BY SOUND
+	LDY #PBZ0
+	BRA AUDNEW
+				;---
+AUDSH::				;SHIELD
+	LDY #SH0
+	BRA AUDNEW
+				;---
+AUDPF::				;TOWER PFFFTS
+	LDY #PF0
+	BRA AUDNEW
+				;---
+AUDTL::				;TOWER LASERS
+	LDY #TL0
+	BRA AUDNEW
+				;---
+AUDTC::				;TIE FIGHTER CANNONS
+	LDY #XL0		;SWITCHED FOR BETTER EFFECT
+	BRA AUDNEW
+				;---
+AUDTCZ::			;TIE FIGHTER CANNONS
+	LDY #XLZ0
+	BRA AUDNEW
+				;---
+AUDSX::				;SMALL EXPLOSION
+	LDY #SX0
+	BRA AUDNEW
+				;---
+;AUDDP::				;DEATH STAR PRELIMINARY EXPLOSION
+;	LDY #DP0
+;	BRA AUDNEW
+;				;---
+AUDDF::				;DEATH STAR FINAL EXPLOSION
+	LDY #DF0
+	BRA AUDNEW
+				;---
+;AUDPM::			;THIS WAS PASS BY, MEDIUM
+;	LDY #PM0
+;	BRA AUDNEW
+				;---
+AUDPS::				;PASS BY, SHORT
+	LDY #PS0
+	BRA AUDNEW
+				;---
+AUDCR::				;CRASH INTO BRIDGE OR TOWER
+	LDY #CR0
+	BRA AUDNEW
+				;---
+AUDRC::				;R2 COOKED, SLIGHTLY DISPLEASED
+	LDY #RC0
+	BRA AUDNEW
+				;---
+AUDDR::				;DEAD R2
+	LDY #DR0
+	BRA AUDNEW
+				;---
+AUDSS::				;PLAYER SHOT DOWN AN ALIEN SHOT
+	LDY #SS0
+	BRA AUDNEW
+				;---
+AUDPH::				;PORT HOLE SHOT
+	LDY #PH0
+	JMP AUDNEW
+				;---
+AUDRS::				;R2 SHAVE
+	LDY #RS0
+	JMP AUDNEW
+				;---
+AUDTH::				;THRUSTING DOWN TO DEATH STAR
+	LDY #TH0
+	JMP AUDNEW
+				;---
+AUDYEA::			;YAY, TEST PASS
+	LDY #YEA0
+	JMP AUDNEW
+				;---
+AUDNAY::			;NAY, TEST FAIL
+	LDY #NAY0
+	JMP AUDNEW
+				;---
+AUDTST::			;TEST TONES
+	LDY #TST0
+	JMP AUDNEW
+				;---
+
+	.PAGE
+	.SBTTL	AUDNEW - NEW AUDIO
+AUDNEW::			;Y-->POINTER TABLE
+	LDA (Y)+
+	STA AU.SHF
+	LDX #AU.BLK
+10$:				;---
+	LSL AU.SHF
+	BCC 30$
+	LDD (Y)++		;FREQ POINTER
+	STD AU$PNT(X)
+	LDD (Y)++		;CONTROL/VOLUME POINTER
+	STD AU$PNT+AU$IZ(X)
+	LDA #1
+	STA AU$RPT(X)
+	STA AU$TMR(X)
+	STA AU$RPT+AU$IZ(X)
+	STA AU$TMR+AU$IZ(X)
+30$:				;---
+	LEAX 2*AU$IZ(X)
+	LDA AU.SHF
+	BNE 10$
+				;---
+	RTS
+				;===
+	.PAGE
+
+	.SBTTL	AUDDO - UPDATE AUDIO EVERY 16 MILS
+AUDDO::				;AUDIO DO - EVERY 16 MILS
+	LDX #AU.BLK		;AUDIO CHANNEL INFO
+	LDB #0			;POKEY CHANNEL OFFSET
+10$:				;---
+	LDY AU$PNT(X)		;Y-->AUDIO PHRASE TABLE
+	BEQ 60$			;? POINTER VALID?
+	DEC AU$TMR(X)		;THEN PROCEED WITH CHANNEL
+	BNE 55$			;? DONE WITH CURRENT NOTE?
+	DEC AU$RPT(X)
+	BNE 40$			;? DONE WITH CURRENT PHRASE?
+	LEAY TA$IZ(Y)		;THEN BUMP TO NEXT PHRASE
+	STY AU$PNT(X)
+	LDA TA$RPT-TA$IZ(Y)	;
+	BNE 35$			;?END OF ALL PHRASES?
+	STA AU$PNT(X)		;THEN TURN OFF AUDIO POINTER
+	STA AU$PNT+1(X)
+	BRA 45$			;J TURN OFF CHANNEL
+35$:				;---ANOTHER PHRASE EXISTS
+	STA AU$RPT(X)		;REPEAT COUNT
+	LDA TA$SND-TA$IZ(Y)	;NEW CURRENT SOUND
+	STA AU$SND(X)
+	BRA 42$			;J BEGIN NEW SOUND
+40$:				;---ELSE CONTINUE WITH PHRASE
+	LDA AU$SND(X)		;INCREMENT SOUND CHANNEL VALUE
+	ADDA TA$INC-TA$IZ(Y)
+	STA AU$SND(X)
+42$:				;---
+	LDA TA$TMR-TA$IZ(Y)		;RESET TIMER FOR PHRASE
+	STA AU$TMR(X)
+	LDA AU$SND(X)
+45$:				;---
+				;A:=NEW CHANNEL VALUE
+	LDY #P.BASE		;Y-->POKEY CHANNELS
+	STA B(Y)		;OFFSET IN BREG
+55$:				;---END IFEQ
+60$:				;---END IFNE
+	LEAX AU$IZ(X)
+	INCB
+	CMPB #AU$EQ
+	BLO 10$
+				;---
+	RTS
+	.PAGE
+
+	.SBTTL	DOCUMENTATION
+	.COPY POKEY.DAT	;<<<<<<<<<<<<<<<<<<<<<<<<<<
+	.END
+
+
+                                                                                                                                                                                                                                                                                                                                                                                             

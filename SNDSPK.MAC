@@ -1,0 +1,490 @@
+	.TITLE SNDSPK	;SPEAK UP
+	.INCLUDE SNDCMN		;<<<<<<<<<<<<<<<<<<<<<<<<<
+				;===
+				;D-PAGE RAM
+;	.BSECT
+
+;SP.BGN::.BLKB 2			;CURRENT SAMPLE POINTER
+;SP.DLY::.BLKB 1			;INTER-WORD DELAY
+;SP.END::.BLKB 2			;END POINTER FOR CURRENT SAMPLE SETS
+;SP.MES::.BLKB 2			;CURRENT WORD LIST POINTER
+;SP.NXT::.BLKB 2			;NEXT WORD LIST POINTER AFTER CURRENT IS DONE
+;SP.QBT::.BLKB 1			;BOTTOM OF SPEECH SENTENCE QUEUE
+;SP.QTP::.BLKB 1			;TOP OF SPEECH SENTENCE QUEUE
+;SP.RES::.BLKB 1			;RESET FLAG AND COUNTER
+;SP.STA::.BLKB 1			;STATUS AND PHASE OF SPEECH ROUTINE
+;SP.DOG::.BLKB 1			;WATCHDOG TIMER
+	.GLOBB SP.BGN,SP.DLY,SP.END,SP.MES,SP.NXT,SP.QBT,SP.QTP,SP.RES,SP.STA
+	.GLOBB SP.DOG
+	.GLOBB $INTCT
+				;===
+
+	.ASECT
+	.=SPKRAM
+SPKQUE:
+	.BLKB 32.		;0 THRU 1F, WORD POINTERS (16 SENTENCES)
+				;===
+
+	.CSECT	SPK
+			;---
+SPKRED::		;RED FIVE, STANDING BY
+	LDD #TRED
+	JMP SPKNEW
+TRED:	.BYTE 5,0FF
+			;---
+;SPKSWI::		;SWITCH YOUR DEFLECTORS ON, DOUBLE FRONT
+;	LDD #TSWI
+;	JMP SPKNEW
+;TSWI:	.BYTE 9,0FF
+			;---
+SPKR2T::		;R2, TRY AND INCREASE THE POWER
+	LDD #TR2T
+	JMP SPKNEW
+TR2T:	.BYTE 0FE,7,0FF
+			;---
+SPKTHI::		;THIS IS RED FIVE, I'M GOING IN
+	LDD #TTHI
+	JMP SPKNEW
+TTHI:	.BYTE 6,0FF
+			;---
+;SPKBRE::		;BREATH
+;	LDD #TBRE
+;	JMP SPKNEW
+;TBRE:	.BYTE 10.,0FF
+			;---
+SPKIMO::		;BREATH; I'M ON THE LEADER; BREATH
+	LDD #TIMO
+	JMP SPKNEW
+TIMO:	.BYTE 10.,3,10.,0FF
+			;---
+SPKUSE::		;USE THE FORCE, LUKE
+	LDD #TUSE
+	JMP SPKNEW
+TUSE:	.BYTE 1,0FF
+			;---
+SPKSTR::		;BREATH; THE FORCE IS STRONG WITH THIS ONE; BREATH
+	LDD #TSTR
+	JMP SPKNEW
+TSTR:	.BYTE 10.,4,10.,0FF
+			;---
+;SPKYAH::		;YAHOO
+;	LDD #TYAH
+;	JMP SPKNEW
+;TYAH:	.BYTE 11.,0FF
+			;---
+SPKYAU::		;YAHOO; YOU'RE ALL CLEAR KID
+	LDX #TYAU
+	JMP SPITE
+TYAU:	.BYTE 11.,8,0FF
+			;---
+;SPKYOU::		;YOU'RE ALL CLEAR KID
+;	LDD #TYOU
+;	JMP SPKNEW
+;TYOU:	.BYTE 8,0FF
+			;---
+SPKREM::		;REMEMBER
+	LDD #TREM
+	JMP SPKNEW
+TREM:	.BYTE 2,0FF
+			;---
+SPKALW::		;ALWAYS
+	LDD #TALW
+	JMP SPKNEW
+TALW:	.BYTE 16.,0FF
+			;---
+SPKFOR::		;THE FORCE WILL BE WITH YOU
+	LDD #TFOR
+	BRA SPKNEW
+TFOR:	.BYTE 15.,0FF
+			;---
+SPKFOA::		;THE FORCE WILL BE WITH YOU; ALWAYS
+	LDD #TFOA
+	BRA SPKNEW
+TFOA:	.BYTE 15.,16.,0FF
+			;---
+SPKHAV::		;BREATH; I HAVE YOU NOW; BREATH
+	LDD #THAV
+	BRA SPKNEW
+THAV:	.BYTE 10.,12.,10.,0FF
+			;---
+;SPKREB::		;REBEL BASE, ONE MINUTE AND CLOSING
+;	LDD #TREB
+;	BRA SPKNEW
+;TREB:	.BYTE 13.,0FF
+			;---
+SPKSTA::		;BREATH; STAY IN ATTACK FORMATION; BREATH
+	LDD #TSTA
+	BRA SPKNEW
+TSTA:	.BYTE 10.,14.,10.,0FF
+			;---
+SPKR2N::		;R2 NO
+	LDD #TR2N
+	BRA SPKNEW
+TR2N:	.BYTE 17.,0FF
+			;---
+;SPKGET::		;GET SET UP FOR YOUR ATTACK RUN
+;	LDD #TGET
+;	BRA SPKNEW
+;TGET:	.BYTE 21.,0FF
+			;---
+SPKHIT::		;I'M HIT BUT NOT BAD, R2 SEE WHAT YOU CAN DO WITH IT
+	LDX #THIT
+	BRA SPITE
+THIT:	.BYTE 0FE,19.,0FF
+			;---
+SPKLOS::		;I'VE LOST R2
+	LDX #TLOS
+	BRA SPITE
+TLOS:	.BYTE 0FE,0FE,0FE,0FE,0FE,0FE,0FE,20.,0FF	;PAUSE 1.75 SECS
+			;---
+;SPKSCP::		;MY SCOPE'S NEGATIVE, I DON'T SEE ANYTHING
+;	LDD #TSCP
+;	BRA SPKNEW
+;TSCP:	.BYTE 18.,0FF
+			;---
+SPKSHK::		;I CAN'T SHAKE HIM
+	LDX #TSHK
+	BRA SPITE
+TSHK:	.BYTE 22.,0FF
+			;---
+SPKTRU::		;LUKE, TRUST ME
+	LDD #TTRU
+	BRA SPKNEW
+TTRU:	.BYTE 23.,0FF
+			;---
+SPKLET::		;LET GO, LUKE
+	LDD #TLET
+	BRA SPKNEW
+TLET:	.BYTE 9.,0FF
+			;---
+SPKSIZ::		;LOOK AT THE SIZE OF THAT THING
+	LDX #TSIZ
+	BRA SPITE
+TSIZ:	.BYTE 13.,0FF
+			;===
+SPKELE::		;ELEPHANT PASS-BY SOUND
+	LDX #TELE
+	BRA SPITE
+TELE:	.BYTE 18.,0FF
+			;===
+SPKGRE::		;GREAT SHOT KID, THAT WAS 1 IN A MILLION
+	LDD #TGRE
+	BRA SPKNEW
+TGRE:	.BYTE 21.,0FF
+			;===
+
+SPKI::			;INIT SPEECH CHIP, WARMSTART
+	LDD #0		;SPECIAL FLAG FOR WARMSTART
+SPKNEW:
+	STD SP.NXT
+			;---
+	LDB SP.QTP	;UPDATE TO NEXT QUEUE POSITION
+	INCB
+	ANDB #0F	;16 ITEMS
+	STB SP.QTP
+	LSLB		;ONE WORD EACH
+	LDX #SPKQUE	;SENTENCE FIFO QUEUE
+	ABX
+	LDD SP.NXT
+	STD 0(X)
+			;---
+	RTS
+			;===
+SPITE:	LDB SP.QTP	;IF I CAN'T BE FIRST, I WON'T BE AT ALL.
+	CMPB SP.QBT
+	IFEQ		;?NO OTHER VOICES IN THE WAY?
+	LDB SP.STA
+	IFEQ		;?AND NO VOICE CURRENTLY BEING SPOKEN?
+	TFR X,D
+	BRA SPKNEW
+	ENDIF
+	ENDIF
+	RTS
+
+
+SPKSKP::		;SKIP OVER WAITING MESSAGES
+	LDB SP.QTP
+	STB SP.QBT	;POINT BOTTOM TO TOP, SKIPPING MESSAGES
+			;
+	RTS
+			;===
+
+	.PAGE
+	.SBTTLE SPKIRQ ; SPEECH IRQ DRIVER
+
+	.GLOBL SPKVTB,SPKVTZ	;SPEECH DATA TABLE
+				;===
+	.CSECT SPK		;NOW BACK TO OUR PROGRAM
+
+	.PAGE
+;
+; METHOD FOR USING TMS-5220 SPEECH SYNTHESIZER WITH EXTERNAL
+; PARALLEL DATA WITH 4 MS INTERRUPTS
+; USER POINTS TO MESSAGE (END=FF)
+;
+; PROGRAMMER: JED MARGOLIN
+; ADAPTED BY: GREGR
+; DATE: 6/14/82
+;
+; HARDWARE: STAR WARS SOUND PCB
+;
+; MAC69
+;
+; ----------------ALGORITHM-----------------------------------
+;
+; PA5 controls the supply voltage to the 5220, enabling the programmer
+; to turn off power to the device when it gets lost beyond all hope.
+;
+; PA5 = 1 = 5220 power off (default off when board is reset)
+;
+; the 5220's power-up clear sequence is supposed to take 15 ms.
+;
+;
+;
+; If Reset-Count is non-zero:
+;	If negative
+;		First 64 mills
+;		Pull all speech lines high
+;		Turn off 5220
+;		else Second 64 mills
+;		Turn on 5220
+;		When finished with power up(safety factor of 4)
+;		Set Reset-Count to fill fifo and reset chip
+;	If plus		
+;	End any previous Write Strobe
+;	Write FF to Speech Data Latch
+;	Decrement Reset-Count
+;	If reset-count is done, then reset software too
+;	Begin new Write Strobe
+;	Return
+;
+; If Ready is False:
+;	Count up watchdog timer
+;	If ready has been false for more than a second, goto warmstart
+;	Return
+;
+; If Ready is True:
+;	Clear watchdog timer
+;	End any previous Write Strobe
+;
+; If Ready is True and Reset-Count is zero and Talk-Status is
+;
+;   3:	Get Word using Message Pointer
+;	If Word .EQ. FF
+;	    Talkstatus = 00
+;	    Set SP.DLY to inter-message delay of 255
+;	    Return
+;	If Word .NE. FF
+;	    Use Word as index to get start and end addresses of speech data
+;	    Write Speak External Command (60) to Speech Data Latch
+;	    Begin new Write Strobe
+;	    Decrement Talk-Status
+;	    Return
+;
+;   2:	Get next Speech byte and write to Speech Data Latch
+;	Begin new Write Strobe
+;	Increment Data Pointer
+;	If end of word:  Decrement Talk-Status
+;		         Inter = 40 (Interword Delay)*2(Twice per 4 ms IRQ)
+;	Return
+;
+;   1:  Decrement Inter
+;	If Inter = 0, Talk-Status = 3
+;
+;   0:  Count down inter-message delay, if needed
+;	If Delay is finished
+;		If a new message is waiting in fifo queue
+;			Setup SP.MES
+;			If special warmstart request, do warmstart
+;			TALK-STATUS = 3
+;	Return
+;
+;
+; Power-On Initialization:
+;	Use SPKRES routine
+;
+;
+; To Output a word: (If Talk-Status is not zero, it is not ready for another word)
+;	Set up index numbers of Words in a Message Buffer.
+;	The end of the buffer is siginified by 'FF'
+;	Each word index will access a block of four bytes consisting
+;	of a starting address and an ending address
+;	Message Pointer		SP.MES = Address of message (2 bytes)
+;	Talk-Status		SP.STA  = 3
+;
+; ------------------------------------------------------------
+;
+.MACRO	WSBGNA
+	LDA PAD
+	ANDA #0FE	;WRITE STROBE IS LO TRUE
+	STA PAD
+.ENDM
+			;===
+.MACRO	WSENDA
+	LDA PAD
+	ORA #3		;WRITE STROBE IS HI FALSE, HI OFF
+			;turn off read strobe also
+	STA PAD
+.ENDM
+			;===
+.MACRO	SENDA
+	STA PBD		;OUTPUT REG A TO SPEECH CHIP
+.ENDM
+			;===
+;
+SPKRES::		;RESET THE SPEECH ROUTINE/CHIP
+	LDA #0		;COLDSTART
+	STA SP.QBT
+	STA SP.QTP	;CLEAR ALL WAITING MESSAGES
+	STA SP.DOG	;RESET WATCHDOG ALSO
+			;---
+SPKWRM::		;WARM START THE SPEECH SYSTEM
+	LDA #0FF		;BEGIN POWER OFF SEQUENCE
+	STA SP.RES
+	LDA SP.QBT
+	ANDA #0F	;DON'T LOSE SOFTWARE, JUST MAKE IT REASONABLE
+	STA SP.QBT
+	LDA SP.QTP
+	ANDA #0F
+	STA SP.QTP
+	RTS
+			;===
+
+SPKIRQ::
+	LDA SP.RES	;CHECK RESET-COUNT
+	IFNE		;?RESET MODE?
+	IFMI		;?POWER OF CHIP RESET?
+	LSLA
+	IFMI		;0FF TO 0C0, 40*TWICE EVERY 4 MS =128 MS
+	LDA PAD
+	ORA #3+BT5	;WRITE HI,READ HI,POWER OFF
+	STA PAD
+	LDA #0FF
+	SENDA		;PULL DATA LINES HI ALSO
+	ELSE		;---ELSE C0 TO 7F, TIME TO TURN ON CHIP, 128 MS
+	LDA PAD
+	ANDA #-1-BT5	;POWER ON
+	STA PAD
+	ENDIF
+			;
+	DEC SP.RES	;STARTS AT 0FF, GOES DOWN TO 7F
+	IFPL		;?FINISHED WITH CHIP POWER ON/OFF?
+	LDA #0A*4	;TAKES 10. RESET BYTES, FACTOR OF 4 SAFETY
+	STA SP.RES
+	ENDIF
+			;---
+	ELSE		;ELSE SENDING RESET DATA TO LIVE CHIP
+	WSENDA		;END ANY PREVIOUS WRITE STROBE
+	LDA #0FF	;THEN SEND A RESET
+	SENDA
+	WSBGNA		;START A NEW WRITE STROBE
+	DEC SP.RES
+	IFEQ		;?FINISHED WITH CHIP RESET?
+	LDA #0		;THEN RESET SOFTWARE TOO
+	STA SP.STA	;IDLE STATUS
+	ENDIF
+	ENDIF
+	RTS		;END OF SEND RESET
+	ENDIF
+			;---
+	LDA PAD		;CHECK FOR READY
+	ANDA #04	;?HARDWARE READY?
+	IFNE		;?STILL BUSY?
+	LDA $INTCT
+	ANDA #03	;TWICE EVERY 16 MS IS 8 MS
+	IFEQ
+	INC SP.DOG
+	LBMI SPKWRM	;128. * 8 MILLS IS ONE SECOND
+	ENDIF
+	JMP 100$	;AT LEAST EXIT IF NOT READY
+	ENDIF
+5$:			;---HARDWARE READY
+	LDA #0
+	STA SP.DOG	;TURN DOG OFF FOR A WHILE
+	WSENDA		;END THE WRITE STROBE(EITHER ALREADY ENDED OR WILL
+			;		COMPLETE THE WRITE)
+	LDA SP.STA	;CHECK TALKSTATUS
+	BNE 12$		;?IDLE?
+			;---
+	LDA SP.DLY
+	IFNE		;?STILL INTER-MESSAGE DELAYING?
+	DEC SP.DLY	;THEN TIME IT DOWN
+	JMP 100$	;J
+	ENDIF		;ELSE
+	LDB SP.QBT	;GET NEXT SENTENCE FROM FIFO QUEUE, IF ANY
+	CMPB SP.QTP
+	BEQ 100$	;B EXIT IF QUEUE EMPTY, ALREADY UNLOADED
+	INCB		;INDEX TO NEXT SENTENCE
+	ANDB #0F	;16 MAX SENTENCE QUEUE
+	STB SP.QBT
+	LSLB		;WORD ENTRIES
+	LDX #SPKQUE
+	LDD B(X)	;GET THE SENTENCE POINTER
+	STD SP.MES	;SET IT UP
+	LBEQ SPKWRM	;SPECIAL CODE FOR SOFTWARE WARMSTART
+			;---
+	LDA #3		;AND LET 'ER RIP
+	STA SP.STA
+	RTS		;END OF BEGIN NEW SENTENCE
+12$:			;---
+	CMPA #02
+	BNE 20$
+			;===TALK STATUS 2
+	LDX SP.BGN	;SEND NEXT SPEECH BYTE
+	LDA (X)+
+	SENDA		;OUTPUT
+	WSBGNA		;BEGIN WRITE STROBE
+	STX SP.BGN
+	CMPX SP.END
+	BNE 100$
+29$:			;END OF WORD DELAY STARTUP
+	LDA #1
+	STA SP.STA	;DO DELAY
+	LDA #80		;128.*2MS = 256.MS = 1/4 SECOND PAUSE
+	STA SP.DLY
+	RTS		;END OF TALK STATUS 2
+20$:			;===
+	BLO 30$		;?TALK STATUS 3?
+	LDX SP.MES
+	LDB (X)+	;GET NEXT WORD IN THE MESSAGE
+	STX SP.MES	;UPDATE MESSAGE POINTER
+	CMPB #0FE	;FF=END OF MESSAGE, FE=1/4 SECOND PAUSE
+	BLO 25$		;B IF GOOD MESSAGE POINTER
+	BEQ 29$		;B IF PAUSE REQUESTED
+			;ELSE END OF MESSAGE
+	CLR SP.STA	;NO MORE WORDS -- IDLE LOOP WHILE WAITING FOR MORE
+	LDA #0FF	;LONG INTER-MESSAGE DELAY
+	STA SP.DLY
+	RTS		;END OF TALK STATUS 3
+25$:			;---
+	LDX #SPKVTB	;GET BASE VOICE TABLE
+	ABX		;ADD IN INDEX*4
+	ABX		;ALLOW LOTS OF VOICES (255 MAX)
+	ABX
+	ABX
+			;---
+	CMPX #SPKVTZ
+	LBHS SPKRES	;B RESET SPEECH ROUTINE/CHIP IF BAD ADDRESSES FOUND
+			;---
+	LDD 0(X)	;GET STARTING AND ENDING ADDRESSES
+	STD SP.BGN
+	LDD 2(X)
+	STD SP.END
+	LDA #60		;GENERATE SPEAK EXTERNAL COMMAND
+	SENDA
+	WSBGNA
+	DEC SP.STA
+	RTS		;ENDA OF TALK STATUS 3
+30$:			;===TALK STATUS 1
+	DEC SP.DLY	;INTERWORD DELAY
+	BNE 100$
+	LDA #03
+	STA SP.STA
+100$:			;---
+	RTS
+			;---
+;
+
+	HLL69F
+	.END
+                                                                                                                                                                                                                       

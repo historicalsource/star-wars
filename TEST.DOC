@@ -1,0 +1,1073 @@
+ADD SOMEWHERE: ONE TEST FOR THE BLOCK INDEX COUNTER IS TO PUT THE UNIT IN HARDWARE
+DIAGNOSTIC TEST #__ [PERFORMS IBC, HALT] AND USE AN OSCILLOSCOPE TO LOOK AT
+BIC 0 - BIC 8 TO SEE THAT IT IS OPERATING AS A COUNTER.
+
+Title: TEST.DOC
+
+Test procedures for Star Wars Hardware
+
+Jed Margolin
+
+6/23/83
+-----------------------------------------------------------------------------------------------------------------------------------
+The hardware is on three boards: the AVG Board, the Main Board, and the 
+Sound Board. 
+
+	The AVG Board contains the Analog Vector Generator which draws 
+the lines on the screen. It has 12K bytes of Vector RAM and 4K bytes of 
+Vector ROM. 
+
+	The Main Board contains the 68B09E Game Processor, 48K bytes of 
+Program ROM, 2K bytes of Program RAM, option switches, means for reading 
+control panel switches and pots, a pseudo-random number generator, a digital 
+Divider, and a Matrix Processor which performs the math for the 3D graphics. 
+
+	The Sound Board contains a 68B09E, 16K bytes ROM (for the program, 
+sound tables, and speech vocabulary), a 6532A (with 128 bytes of RAM, 
+two bidirectionmal I/O ports, and an interrupt timer), 2K RAM, a speech 
+synthesizer, four Atari Custom Sound ICs, a stereo image synthesizer 
+and an interface to the Main Board.
+
+	Self-Test (selected by the Self-Test switch on the operator panel)
+tests as much of the hardware as possible. There is also a hardware diagnostic
+mode which permits the repair technician to select specific routines to aid in 
+troubleshooting.
+-----------------------------------------------------------------------------------------------------------------------------------
+SELF TEST : (some aspects of Self-Test are covered in greater detail in the game manual.)
+
+Entering Self-Test from ATTRACT Mode:   (NOTE: Self-Test cannot be entered if a game is in progress.)
+
+		When the Self-Test switch (located on the Utility Panel) is moved to the bottom position
+		the game displays the Bookkeeping Screen.
+
+		By pressing the Coin Aux Switch on the Utility Panel you will bring up the second screen, 
+		which displays the current game options.
+
+		Self-Test actually starts by pressing the Coin Aux Switch for the second time. 
+
+Entering Self-Test from RESET:
+
+		With the Self-Test Switch on the Utility Panal in the bottom position, generate
+		a Game Reset either by powering the game up in Self-Test or by momemtarily
+		grounding the RESET Test Point on the Main Board.
+
+After a seven second delay (during which the screen will go blank even if it was working before) 
+a series of 16 tones should be heard. 
+
+This is the audible indication for HARDWARE ERRORS in case the Program Ram or the 
+Vector Generator is not working. The series of tones, separated by a short pause, 
+will repeat indefinately. A high upward sweeping tone indicates a good part and 
+a low downward sweeping tone indicates a bad part.  Count the tones to find the 
+bad part in the following list:
+
+TONE #		PART #		BOARD LOC.		DESCRIPTION
+
+  1		137211-001	  2F/H  (MAIN)		Program Ram
+  2		137211-001	   5F	(MAIN)		Math Box Ram 0
+  3		137211-001	   5H	(MAIN)		Math Box Ram 1
+  4		137211-001	   3L	(AVG)		Vector Generator Ram 0
+  5		137211-001	   3M	(AVG)		Vector Generator Ram 1
+  6		137211-001	   3P	(AVG)		Vector Generator Ram 2
+  7		137211-001	   4L	(AVG)		Vector Generator Ram 3
+  8		137211-001	   4M	(AVG)		Vector Generator Ram 4
+  9		137211-001	   4P	(AVG)		Vector Generator Ram 5
+ 10		137288-001	   1E	(MAIN)		Non-Volatile Ram (Ram portion only)
+ 11		136021-114	   1F	(MAIN)		Program Rom 0
+ 12		136021-102	  1H/J	(MAIN)		Program Rom 1
+ 13		136021-103	  1J/K	(MAIN)		Program Rom 2
+ 14		136021-104	  1K/L	(MAIN)		Program Rom 3
+ 15		136021-106	   1M	(MAIN)		Program Rom 4
+ 16		136021-105	   1L	(AVG)		Vector Generator Rom
+
+
+-----------------------------------------------------------------------------------------------------------------------------------
+Pressing the COIN AUX Switch advances the Self-Test display as follows:
+
+	SWITCH TEST - For Testing all switches plus the pots in the control.
+
+	MATHBOX TESTS - Tests the Digital Divider and the Matrix Processor.
+			This performs Hardware Tests #15, - #25. It will give the option switch setting 
+			of any test that fails to produce the correct results. It will also run four 
+			additional tests which cannot be run from Diagnostic Mode but which can give useful 
+			information about a malfunctioning board. If one of these tests fails it will display	
+			the letter of the test and a number which appears to be the data that failed.
+			For more information, see the section on HARDWARE DIAGNOSTICS.
+
+	MONITOR TEST 1
+
+	MONITOR TEST 2 - crosshatch
+
+	MONITOR TEST 3 - INTENSITY TEST
+
+	MONITOR TEST 4 - BIP TEST  (used for adjusting the pots that determine the Bipolar Offset)
+
+	MONITOR TEST 5 - SCALE TEST - First LINEAR, then a combination of LINEAR and BINARY
+
+	MONITOR TEST 6 - Raster 
+
+After this it just repeats, starting with the SWITCH TEST.
+STAR WARS Troubleshooting Philosophy:
+
+	Run Self-Test first. If this is not helpful in localizing the problem
+(such as if Self-Test refuses to even run) there are special hardware diagnostic
+routines that can be selected.
+
+	It would be a good idea to check the power supply voltages and the
+clocks before doing anything drastic.
+
+	The Sound Board can be tested without the Main or AVG Boards completely
+working.
+
+	Hardware Diagnostic #1 tests the Main Board memory and will tell you if 
+enough of it is working to run the other tests. Get this working before you
+go on to the next test.
+
+	Hardware Diagnostic #2 tests the AVG memory and will tell you if it
+is ok. The Vector Generator may not work if its memory does not work.
+
+	If the Vector Generator memory is ok but AVG is not working, Diagnostic 
+Tests #3 - #8 are for troubleshooting with an oscilloscope and #9 is for using
+signature analysis. Get the AVG working before going on.
+
+	At this point there will be enough of the system working so that you
+can run Self-Test. If there are problems in the Digital Divider the program will
+tell you which tests failed and will give you the number of the Hardware
+Diagnostic Test which will put the test into a tight loop for troubleshooting.
+The Matrix Processor is also extensively tested during Self-Test and has several 
+Diagnostic Routines available for troubleshooting.
+ 
+STAR WARS Troubleshooting Philosophy Part II (THANK YOU FOR DECIDING TO SERVICE THE ELEVATOR):
+  
+	If there is video and the game seems to work, but there is no sound, the
+problem is probably with the Sound Board or with something further down the 
+line in Regulator/Audio II or even the speakers. The volume control in this
+game is wired on the input to the power amplifiers (rather than the outputs).
+The circuit that is used was chosen because it minimizes noise pick up from
+the game harness but it also means that if the Utility Panel is disconnected
+the amplifiers will run at FULL VOLUME.  
+
+	If there is no video but there is sound and the game seems to be playing,
+the problem is probably in the AVG Board or the display monitor. You can determine
+if it is the monitor by substituting a known good one. If you don't have a known
+good monitor you can use an oscilloscope. Many oscilloscopes can be used in an
+XY mode (connected to the AVG X and Y outputs). If yours cannot, use it in the
+regular sweep mode and look for signs of life on the X, Y, R, G, B test points.
+Even if you test the X and Y signals on an oscilloscope with an XY mode you
+will have to verify that the R, G, B outputs work. If the AVG Board doesn't
+work, see the section covering AVG troubleshooting.
+
+ 	If there is some video but no enemy ships and no stars, the problem is
+probably in the Matrix Processor or in the Divider. Run Self-Test.
+
+	If everything seems to work except there are no stars in the space wave
+and no towers on the surface of the Death Star, the problem is probably in the
+Pseudo-Random Number Generator on the Main Board (ICs 4D, 5B, 5C, 5D). Make sure
+the 3 MHz clock is present and that PRNGCLR(not) is not permanently low.  
+PRNGCLR(not) is made low by a hardware reset and made high by the Processor.
+If the Program is not running, the Pseudo-Random Number Generator will remain
+cleared. When the Pseudo-Random Number Generator is working you can connect 
+a 2.2K resistor from 5D-pin 13 to J16-pin 1 and listen to some very nice 
+white noise.
+
+	Switch 8 on the Option Switch located at 10 E/F puts the game into a
+freeze frame mode which can be advanced frame-by-frame by pressing the Left
+Trigger. There are some sections of the game that use an extra high brightness
+level in order to achieve a special effect such as the Death Star explosion.
+During normal game play these effects last only a short time and there is
+no danger of harming the Picture Tube or the Monitor electronics. However, If 
+you use Freeze Frame during these times for an extended period you may damage
+the Picture Tube by burning a hole in it.
+ 
+	Remember, the Force will be with you. Always.
+
+The following procedure is recommended if the game is dead in the water (and
+it has been determined that the problem is not a faulty monitor).
+-------------------------------------------------------------------------------
+SOUND BOARD 
+
+The Sound Board can be tested without the Main Board or AVG Board fully working.
+(the Main Board must be connected, although the AVG Board can be removed for
+this test.)
+
+	A. Visually inspect the Sound Board for obvious problems like:
+		Loose or missing or improperly oriented ICs
+		Solder shorts
+
+	B. Check for the following power supply voltages:
+		+5vdc 
+		+12vdc
+		-5vdc
+
+	C. Check the following clocks:
+		CLK E (1.5 MHz)  	
+		CLK Q (1.5 MHz in quadrature with CLK E)
+		6 MHz
+		
+	D. Check that the Reset Line at the 68B09E is normally high
+	and goes low when the RESET switch on the Main Board is pressed.
+	If necessary, disable Watchdog on the Main Board and ground the
+	HALT(not) line on the Main Board 68B09E. This will disable the
+	Main Board 68B09E.
+
+	E. Check that the Sound Board 68B09E's IRQ line is not permanently 
+	low. (It is ok if it is low part of the time). If it is permanently 
+	low, look for a trace short. It could also be permanently low because 
+	of a defective 6532 or because the program is not running.
+
+If the above signals and voltages are present, the Sound Board can be
+tested even if everything else on the Main and AVG Boards is dead.
+
+SOUND BOARD - RAM/ROM TEST:
+
+1. The Main Board must be in the Game mode (not Self-Test) unless
+   the Watchdog has been disabled with its HALT(not) line grounded.
+2. Make sure the Sound Board Test Point IS grounded.									
+3. Press RESET on the Main Board.				
+
+
+Upon reset a series of 4 tones should be heard.  This series of tones, 
+separated by a short pause, will be repeated indefinitely.  A high tone 
+indicates a good part and a low tone indicates a bad part.  
+Count the tone to find the bad part in the following table:
+
+				  SOUND
+TONE #		PART #		BOARD LOC.	DESCRIPTION
+
+  1		137211-001	  1F/H		Ram 2K*8
+  2		90-6018		   1E		Ram 128*8
+  3		136021-107	  1J/K		Program Rom 0
+  4 		136021-108	   1H		Program Rom 1
+
+SOUND BOARD - SOUND AND SPEECH TEST
+
+1. The Main Board must be in the Game mode (not Self-Test) unless
+   the Watchdog has been disabled with its HALT(not) line grounded.
+2. Make sure the Sound Board Test Point is NOT grounded.									
+3. Press RESET on the Main Board.				
+4. Ground the Sound Board Test Point.			
+								
+The Sound Board will now do its own diagnostics test which exercises everything 
+on the Sound Board except for the interface with the Main Board.
+												
+If everything works, the Custom Sound ICs will be exercised and the synthesizer 		
+will say something.										
+
+For Custom Audio IC 1 (5D) four long tones should be heard, one tone for each 
+channel with each succeeding tone rising in frequency.  After a very short pause 
+a set of four double tones should occur, these tones test each channel of Custom 
+Audio IC 2 (4D).  For Custom Audio IC 3 (3D) a set of 4 triplet tones should be 
+heard and for Custom Audio IC 4 (2D) a set of 4 quadruplet tones. For a pictorial
+representation see Table below:
+													
+														
+^|	               _		         - -				     - - -			        - - - -
+^|	          _			   - -				      - - -			        - - - -	
+^|	     _			     - -			       - - -			        - - - -		
+^|	_ 			- -				- - - 				- - - -	
+^|________________________________________________________________________________________________________________________________
+^	(5D)			(4D)				(3D)				(2D)
+^
+Frequency 		Time >>>>>												
+															
+
+
+After listening to the tone tests the full selection of voice, music and sound effects
+can be heard.  While the testpoint is grounded a new selection is started every two
+seconds, whether or not the previous selection was completed. By momentarily grounding 
+the testpoint until it starts, the full length of each selection can be heard.
+If the testpoint is continuously grounded, after all the selections are heard 
+the sequence will start over with the RAM/ROM test.
+
+To start the test over, repeat steps 1, 2, 3, and 4. Do not leave out Step 2.							
+
+If you don't hear anything, connect an oscilloscope to the Synthesizer output
+(1C/D-pin 8) and look for some obvious activity when the test is supposed
+to be running . Do the same at the outputs of the Sound IC buffers (4C-pin 1,
+4C-pin 7, 3C-pin 1, and 3C-pin 7). [Even when the Custom Sound ICs are working,
+there will be no measurable signals at the outputs of the Custom Sound ICs
+themselves because the buffers act as current summing amplifiers.]
+
+If the oscilloscope indicates that audio is present but you don't hear
+anything, trace the signal downstream to the speakers.
+
+If all else fails, use the CAT Box. (See USING THE CAT BOX WITH THE SOUND BOARD)
+ 
+MAIN and AVG BOARDS - If the AVG Board has been removed while testing the Sound Board, it 
+should be reattached for the following tests (the Sound Board can be removed, though).
+If the HALT(not) line has been grounded for the Sound Board test, this would be a good
+time to remove that jumper.
+
+If the Main and AVG Board sytem is not working; on the Main Board:
+
+	A. Visually inspect the board for obvious problems like:
+		Loose or missing or improperly oriented ICs
+		Solder shorts
+
+	B. check for the following voltages:
+		+5v 
+		+12v 
+		+5EAROM (separate 5 volts for the non-volatile memory)
+		+10.3 unregulated.
+ 
+	C. check for the following clocks: 
+		12 MHz
+		6 MHz
+		3 MHz
+		1.5 MHz
+		E
+		Q
+
+	D. check that the 68B09E's HALT, NMI, and FIRQ lines are 
+	   always high.
+	
+	E. check that the 68B09E's RESET(not) line is high except when you press 
+	   the RESET switch. If necessary, disable watchdog (jumper WDDIS(not) to ground). 
+
+	F. check that the 68B09E's IRQ line is not permanently low. (It is
+	   ok if it is low part of the time).
+
+Run Hardware Diagnostic Test Routine #1 to check whether the Main Board kernel is working.
+If it isn't, use the CAT Box to find and correct the problem. (See USING THE CAT BOX WITH
+THE MAIN BOARD)
+
+
+NOTE: Troubleshooting the Watchdog Circuit
+
+	The Watchdog circuit will send continuous reset pulses to the microprocessor
+on the Main Board if a problem exists within the microprocessor circuit. If the
+Self-Test fails to run, it is a very good practice to check the reset line.
+
+	RESET(not) is a microprocessor input (pin 37). In a properly operating game,
+reset should occur during power-up or when the RESET test point is grounded.
+A pulsing RESET(not) line indicates that something is causing the microprocessor
+to lose its place within the program. Typical causes are:
+
+	. Open or shorted address or data bus lines
+	. Bad microprocessor chip
+	. Bad bus buffers
+	. Bad ROM
+	. Bad RAM
+	. Any bad input or output that causes an address or data line to be held in a
+	  constant high or low state
+
+	To aid in troubleshooting, the WDDIS(not) test point can be connected to a ground test
+point to prevent resets.
+-----------------------------------------------------------------------------------------------------------------------------------
+If the Main Board kernel is working and there is nothing on the monitor,
+then on the AVG Board:
+
+	A. Visually inspect the board for obvious problems like:
+		Loose or missing or improperly oriented ICs
+		Solder shorts
+
+	B. check for the following voltages:
+		+5v
+		+12vdc
+		+15vdc
+		+22vdc
+		-22vdc
+		-15v
+
+	C. check for the following clocks: 
+		12 MHz
+		6 MHz
+		3 MHz
+		VGCLK (1.5 MHz) 
+
+If these are ok, run  Hardware Diagnostic Test Routine #2 to check whether the
+Vector Generator Memory (both RAM and ROM) is ok. 
+
+If the Vector Generator Memory is ok but the Vector Generator doesn't work,
+run the Hardware Diagnostic Test Routines #3 - #8. These routines will enable
+you to trace the micro-operation of each vector generator instruction.
+
+Another method of determining a vector generator hardware failure is to use Signature
+Analysis, which is selected by Hardware Diagnostic Test Routine #9. (See USING THE
+CAT BOX WITH THE VECTOR GENERATOR.)
+
+-----------------------------------------------------------------------------------------------------------------------------------
+Hardware Diagnostics: These tests make use of the set of Option Switches at 10 E/F. 
+(Remember to restore them to their proper setting when you are done.)
+
+To use the Hardware Diagnostic routines:
+
+	A. The Self-Test switch should be on.
+
+	B. Ground the Diagnostic Test Point.
+
+	C. Set Option Switches as indicated. If an unimplemented switch position
+	   is selected, the three test LEDs (LED 1, LED 2, and LED 3) will
+	   all flash on and off together about once per second.
+	   Also, on Diagnostic tests 10 - 26, the number of the test will 
+	   appear on the monitor (if both the AVG Board and the Monitor are working).
+
+	D. If you are going to spend much time with these tests, you should
+	   consider attaching a small push-button switch (momentary, normally off)
+	   to the RESET test points. 
+
+	E. You might also want to remove the NOVRAM from its socket (1E) while you 
+	   are troubleshooting the rest of the hardware. This is because pressing 
+	   the RESET switch "uses up" one of the NOVRAM's store cycles. It is rated
+	   for either 10,000 store cycles (assuming the data is not changed) or for  
+	   1,000 store cycles (assuming the data is changed). If you do remove
+	   the NOVRAM, don't lose it. 
+
+
+
+
+#1	   MAIN BOARD Kernel TEST - This tests whether the 68B09E, ROM 4,
+	   and program RAM are working together to enable the basic
+	   Self-Test and Hardware Diagnostics to run.
+
+		1. Set Option Switch 10 E/F as follows:
+
+			 8   7   6   5   4   3   2  1
+			------------------------------
+			off off off off off off off off
+	
+	
+		2. If you have just come from Test #2 you can skip Step 3.
+
+		3. Press RESET. 
+		   LED 1, LED 2, and LED 3 should all come on and stay on 
+		   for about 10 seconds. 
+
+		4. If the kernel is running, LED 2 and LED 3 will go off and
+		   LED 1 will flash on and off about once a second. 
+		   LED 2 and LED 3 must be off. If they are not, the 68B09E 
+		   may be running in a failure mode with the kernel not working.	   
+
+		   LED 1 will be set to flash (or not flash) depending on the
+		   results of the test, and will keep doing it until either
+		   another test is selected or RESET is pressed. If, for example,
+		   something  happens after the test to fix the Program RAM 
+		   (or make it inoperative)  LED 1 will not know about it and will
+		   continue to flash (or not flash) until you press RESET and it
+		   does the memory test again. 
+
+		5. If the kernel is not running, unplug the Sound Board
+		   and/or the AVG Board. If this makes the kernel
+		   work, the problem is probably a short on one of
+		   these two boards on the Address lines or the
+		   the Clock lines.
+
+		6. If all else fails, use the CAT Box. (see CAT Box)
+
+#2	   AVG MEMORY TEST - This tests the Vector Generator RAM and ROM
+
+		1. Set Option Switch 10 E/F as follows:
+
+		     8   7   6   5   4   3    2   1
+		    --------------------------------
+		    on  off off off off off  off off
+
+	
+		2. If you have just come from Test #1 you may skip Step 3.
+
+		3. Press RESET. 
+		   LED 1, LED 2, and LED 3 should all come on and stay on 
+		   for about 10 seconds. 
+
+		4. LED 1 and LED 3 will go off and if the Vector Generator RAM and 
+		   ROM are good, LED 2 will flash on and off about once a second. 
+		   LED 1 and LED 3 must be off. 
+
+		   LED 2 will be set to flash (or not flash) depending on the
+		   results of the test, and will keep doing it until either
+		   another test is selected or RESET is pressed. If, for example,
+		   something  happens after the test to fix the Vector Generator
+		   Memory (or make it inoperative)  LED 2 will not know about it 
+		   and will continue to flash (or not flash) until you press RESET 
+		   and it does the memory test again. (The memory tests for Diagnostic
+		   Tests #1 and #2 are actually done at the same time.) 
+
+
+		   If you select Tests #1 or #2 after having selected other test routines
+		   you must again press RESET to perform the test. 
+For Test #3 - Test #26 select the Option Switch position as shown. It is not necessary to press 
+RESET when selecting within this group of tests.
+
+	   AVG INSTRUCTIONS: Tests to generate specific vector generator instructions. Each test 
+			     is retriggered every 400 uS for as long as the test is selected.
+
+			
+ 											Option Switch 10 E/F
+
+										 8    7    6    5    4    3    2    1
+										--------------------------------------
+#3		HALT								 on   on  off  off  off  off  off  off
+
+#4		VECTOR (long) and HALT						 on   on  off  off  off  off  off  on
+
+#5		SHORT VECTOR and HALT						 on   on  off  off  off  off  on   off
+
+#6		CENTER and HALT							 on   on  off  off  off  off  on   on
+
+#7		SCALELD (load binary and linear scaling)			 on   on  off  off  off  on   off  off
+
+#8		STATCLK (Z scaling)						 on   on  off  off  off  on   off  on
+
+#9		AVG signature Analysis						 on   on  off  off  off  on   on   off
+		(see section on AVG SIGNATURE ANALYSIS)
+
+**********************************************************************************************************
+**	(for VERN)  Tests 3 - 9 should be accompanied by pictures or drawings of the waveforms 		**
+**													**
+**********************************************************************************************************
+
+	   MATRIX PROCESSOR INSTRUCTIONS: The test number will be displayed on the monitor (assuming that
+					  the monitor and the AVG are working). Each test is retriggered 
+					  every 40 - 84 uS for as long as the test is selected. 
+			
+ 											Option Switch 10 E/F
+
+Test #		Microprogram		Instruction	          [Data]	 8    7    6    5    4    3    2    1
+----------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------------------------------------
+#10		LDA M(0F), HALT		Load Register A from      		on    on   on   off  off  off  off  off
+					memory location 0F,	  [5555]
+					Halt
+----------------------------------------------------------------------------------------------------------------------
+#11		LDB M(0F), HALT		Load Register B from  	  		on    on   on   off  off  off  off  on
+					memory location 0F,	  [AAAA]
+					Halt
+----------------------------------------------------------------------------------------------------------------------
+#12		LDC M(0F), MAC, HALT	Load Register C from   	  		on    on   on   off  off  off  on   off
+					memory location 0F,	  [5555]
+					Multiply and Accumulate,
+					Halt
+----------------------------------------------------------------------------------------------------------------------
+#13		CLA, HALT		Clear Accumulator, Halt			on    on   on   off  off  off  on   on
+
+----------------------------------------------------------------------------------------------------------------------
+#14		IBC, HALT		Increment Block Index Counter		on    on   on   off  off  on   off  off
+----------------------------------------------------------------------------------------------------------------------
+#15		LAC M(00)		Load Accumulator from			on    on   on   off  off  on   off  on
+					memory location 00,	[5555]
+		SAC M(01), HALT		Store Accumulator into
+					memory location 01,	[5555]
+					Halt
+----------------------------------------------------------------------------------------------------------------------
+#16		LAC M(00)		Load Accumulator from			on    on   on   off  off  on   on   off
+					memory location 00,	[AAAA]
+		SAC M(01), HALT		Store Accumulator into
+					memory location 01,	[AAAA]
+					Halt
+----------------------------------------------------------------------------------------------------------------------
+#17		LDA M(0C),CLA		Load Register A from			on    on   on   off  off  on   on   on
+					memory location 0C,	[5555]
+					Clear Accumulator
+		LDB M(0D)		Load Register B from
+					memory location 0D,	[0000]
+		LDC M(0E), MAC		Load Register C from
+					memory location 0E,	[4000]
+					Multiply and Accumulate
+		SAC M(00), HALT		Store Accumulator into
+					memory location 00	[5555]
+
+		performs (5555 - 0000) * 4000 = 5555			
+----------------------------------------------------------------------------------------------------------------------
+#18		LDA M(0C),CLA		Load Register A from			on    on   on   off  on   off  off  off
+					memory location 0C,	[0000]
+					Clear Accumulator
+		LDB M(0D)		Load Register B from
+					memory location 0D,	[5555]
+		LDC M(0E), MAC		Load Register C from
+					memory location 0E,	[C000]
+					Multiply and Accumulate
+		SAC M(00), HALT		Store Accumulator into
+					memory location 00	[5555]
+
+		performs (0000 - 5555) * C000 = 5555			
+----------------------------------------------------------------------------------------------------------------------
+#19		LDA M(0C),CLA		Load Register A from			on    on   on   off  on   off  off   on
+					memory location 0C,	[2AAA]
+					Clear Accumulator
+		LDB M(0D)		Load Register B from
+					memory location 0D,	[0000]
+		LDC M(0E), MAC		Load Register C from
+					memory location 0E,	[4000]
+					Multiply and Accumulate
+		SAC M(00), HALT		Store Accumulator into
+					memory location 00	[2AAA]
+
+		performs (2AAA - 0000) * 4000 = 2AAA				
+-------------------------------------------------------------------------------------------------------------------------	
+#20		LDA M(0C),CLA		Load Register A from			on    on   on   off  on   off   on   off
+					memory location 0C,	[0000]
+					Clear Accumulator
+		LDB M(0D)		Load Register B from
+					memory location 0D,	[2AAA]
+		LDC M(0E), MAC		Load Register C from
+					memory location 0E,	[C000]
+					Multiply and Accumulate
+		SAC M(00), HALT		Store Accumulator into
+					memory location 00	[2AAA]
+
+		performs (0000 - 2AAA) * C000 = 2AAA			
+
+
+The Self-Test program selected by the Screen entitled MATHBOX TESTS performs Hardware Tests 
+#15, #16, #17, #18, #19, and #20.  It will give the option switch setting of any test that 
+fails to produce the correct results.
+
+It will also run four additional tests which cannot be run from Diagnostic Mode but which can
+give useful information about a malfunctioning board. If one of these tests fails it will
+display the letter of the test and a number which appears to be the data that failed.
+
+These tests are:
+
+	A. ACCUMULATOR TEST - This test:
+				1. Clears the Accumulator 
+ 				2. performs ACC= 0000 + (0001-0000)*4000  [the result is 0001]
+				3. stores ACC into memory
+				4. loads this back into Register A and performs ACC= 0001 + (0001-0000)*4000 
+				   [the result is 0002]
+				5. It repeats steps 3 and 4 with the result the number in the Accumulator
+				   doubles each time. The sequence is 0001, 0002, 0004, 0008, 0010, 0020, 0040, 0080,
+				   0100, 0200, 0400, 0800, 1000, 2000, 4000, 8000. (This is called a "walking ones"
+				   test.)
+
+	   If Test A fails, but Tests #15 thru #20 are ok, the problem is likely to be be with shift registers 9A, 9B
+or Quad Serial Adder/Subtractor 8B (One of the other sections is used to subtract Register B from Register A).		  
+
+	B. BLOCK INDEX COUNTER AND MATRIX PROCESSOR INDIRECT ADDRESSING -
+
+		The 68B09E writes data directly into the Math RAM and, using the Block Index Counter, runs a
+		Matrix Processor program which uses the Block Index Counter (in the Indirect Addressing Mode)
+		to read it back.
+
+	C. ACUMULATOR ADDER TEST -
+
+		1. Clears the Accumulator
+		2. Performs ACC = (1B2C - 0000) * 4000 + (196A - 0000) * 4000   [the result is 3496]
+
+	   This tests for a particular bit stream through the Accumulator section of 8B.
+
+	D. SUBTRACTOR TEST -
+
+		1. Clears the Accumulator
+		2. performs ACC = (2696 - 1B2C) * 4000		[the result is 0B6A]
+
+	   This tests for a particular bit stream through the Subtractor section of 8B.
+  
+	   DIVIDER TESTS: The test number will be displayed on the monitor (assuming that
+			  the monitor and the AVG are working). Each test is retriggered 
+			  every 50 - 60 uS for as long as the test is selected. 
+			 
+
+ 											Option Switch 10 E/F
+
+Test #		Dividend / Divisor = Quotient					 8    7    6    5    4    3    2    1
+------------------------------------------------------------------------------------------------------------------------
+#21		4000	 / 4000	   = 4000					on    on   on   on  off  off  off  off
+
+		Tests Divide Cycle Counter (should be 15 pulses)
+------------------------------------------------------------------------------------------------------------------------
+#22		5555	 / 4000	   = 5555					on    on   on   on   off  off  off   on
+
+#23		2AAA	 / 4000	   = 2AAA					on    on   on   on   off  off   on   off
+
+		Tests for shorted bits in the Dividend and/or Quotient
+-------------------------------------------------------------------------------------------------------------------------
+#24		2AAA	 / 2AAA	   = 4000					on    on   on   on   off  off   on    on
+
+#25		5555	 / 5555	   = 4000					on    on   on   on   off   on   off  off
+
+		Tests for shorted bits in the Divisor
+--------------------------------------------------------------------------------------------------------------------------
+
+The Self-Test program on the Screen entitled MATHBOX TESTS performs Hardware Tests #21, #22, #23, #24, and #25. 
+It will give the option switch setting of any test that fails to produce the correct results.
+
+
+
+
+SOUND BOARD COMMUNICATIONS:
+
+This tests whether the Main Board can communicate with the Sound Board. If it is successful it will 
+turn LED 3 on and off about once per second. LED 1 and LED 2 must remain off.
+
+If it passes this test it does not mean that the Sound is completely functional; 
+only that enough of it is working to communicate with the Main Board.
+
+
+											Option Switch 10 E/F 
+
+										 8    7     6    5    4    3    2    1
+								 		 --------------------------------------	
+#26									   	 on   on    on   on   on  off  off  off
+
+
+In this test, the Main Board sends a sequence of bytes to the Sound Board, which the Sound Board is expected to
+echo back. The sequence of bytes is:
+
+	58, 01, 02, 04, 08, 10, 20, 40, 80 
+
+which is repeated as long as this test mode is selected.
+
+-----------------------------------------------------------------------------------------------------------------------------------
+
+TROUBLESHOOTING WITH THE CATBOX
+-------------------------------------------------------------------------------
+USING THE CAT Box with the MAIN BOARD:
+
+A. CAT Box Preliminary Set-Up
+	1. Turn off the electrical power to the game.
+	2. Remove the wiring harness from the RFI Shield Board.
+	3. Disengage the fasteners holding the RFI Shield Board to the RFI Cage
+	   by pulling the pins out a short distance.
+	4. Remove the PCB game assembly from the Cage.
+	5. Connect the harness from the game to the RFI Shield Board edge connectors.
+	6. Connect the WDDIS(not) test point to ground.
+	7. There are three different ways that the CATBOX can be connected 
+	   to the Main Board.
+
+		a) Use the 6809E CAT Box Adapter where the CAT Box is plugged
+		   into the Adapter, the 68B09E is removed from its socket,
+		   and the Adapter Cable Type 1 is plugged into the 68B09E 
+		   socket.
+
+		b) Use the 6809E CAT Box Adapter in which the CAT Box is plugged
+		   into the Adapter, the 68B09E is left in place, and the
+		   the Adapter Cable Type 2 is clipped over the 68B09E.
+		   (Observe Pin 1 Polarity). This puts the 68B09E in the HALT mode, 
+		   putting the address, data, and R/W lines into the high impedance 
+		   state, making it unnecessary to remove the processor from the socket 
+		   unless you suspect that it is defective. 
+		   The processor may be removed if desired. 
+
+		c) If you do not have the 6809E CAT Box Adapter, plug the CAT Box
+		   interface cable directly into the Main Board Test Edge 
+		   Connector. This puts the 68B09E in the HALT mode, 
+		   putting the address, data, and R/W lines into the high impedance 
+		   state, making it unnecessary to remove the processor from the socket 
+		   unless you suspect that it is defective. The processor may be removed 
+		   if desired.
+
+
+	8.  Apply power to the game and to the CAT Box.
+	9.  Set CAT Box switches as indicated:
+	    a. TESTER SELF-TEST: OFF
+	    b. TESTER MODE: R/W(not)
+	10. Press TESTER RESET	
+
+
+
+B. ADDRESS LINES
+	1.  Perform the CAT Box preliminary set-up.
+	2.  Connect the DATA PROBE to the CAT Box.
+	3.  Connect the DATA PROBE ground clip to a ground test point on the Main Board.
+	4.  Set the CAT Box switches as indicated:
+	    a. BYTES:1
+	    b. PULSE MODE:UNLATCHED
+	    c. R/W(not) MODE:(OFF)
+	    d. R/W(not):WRITE
+	5.  Key in the address pattern given in Table 1 (use AAAA to start) with
+	    the CAT Box keyboard.
+	6.  Press DATA SET
+	7.  Key in AA
+	8.  Set R/W(not) MODE:STATIC
+	9.  Probe the IC-pin with the DATA PROBE and check that the 1 or 0 LED
+	    indicated in Table 1 lights up. Repeat this step for each address
+	    line listed in Table 1.
+	10. Repeat parts 4-C through 9 using address 5555 in part 5 and
+	    data 55 in part 7.
+
+C. Data Lines
+	1. Perform the CAT Box preliminary set-up.
+	2. Connect the DATA PROBE to the CAT Box.
+	3. Connect the DATA PROBE ground clip to a ground test point on the Main Board.
+	4. Set the CAT Box switches as indicated:
+	   a. BYTES:1
+	   b. R/W(not):(OFF)
+	   c. R/W(not):WRITE
+	5. Key in address 0000 with the keyboard
+	6. Press DATA SET
+	7. Key in data AA with the keyboard
+	8. Set R/W(not) MODE to PULSE and back to (OFF)
+	9. Probe the IC-pin with the DATA PROBE and check that the 1 or 0 LED
+	   indicated in Table 2 lights up. Repeat this check for each IC-pin
+	   in Table 2.
+
+D. Program RAM
+	1. Perform the CAT Box preliminary set-up.
+	2. Set CAT Box switches as indicated:
+	   a. DBUS SOURCE:ADDR
+	   b. BYTES:1024
+	   c. R/W(not) MODE:(OFF)
+	   d. R/W(not):WRITE
+	3. Enter address 4800 with the keyboard
+	4. Set R/W(not) MODE to PULSE and back to (OFF).
+	5. Set R/W(not):READ
+	6. Set R/W(not) MODE to PULSE and back to (OFF).
+	7. The Program RAM is a 2K*8 device. To test the entire device 
+	   perform steps 2 through 6 with the address in step 3 at 4C00.
+	7. If the CAT Box reads an address that doesn't match with that
+	   written, the COMPARE ERROR LED will light up.  
+
+E. Program ROM SIGNATURE ANALYSIS:
+	1. Perform the CAT Box preliminary set-up.
+	2. Connect Catbox SA GROUND to Main Board.
+	3. Connect Catbox SA START to 6809E CAT Box Adapter Board CATBOX SA START/STOP.
+	4. Connect Catbox SA STOP to 6809E CAT Box Adapter CATBOX SA START/STOP.
+	5. Connect Catbox SA CLK to Main Board CLK E.
+	6. Connect 6809E CAT Box Adapter GAME BOARD SA START/STOP to Main Board ROM 4.
+	7. Set up the Signature Analzer: START-negative, STOP-positive.
+	8. Momentarily press RESET on Main Board
+	9. Compare signatures to those shown on the schematic
+
+F. Troubleshooting With Checksums
+		____________________________________________________
+		| Note: This procedure can only be done with those |
+		|       CAT Boxes equipped with a Checksum switch. |
+		|__________________________________________________|
+
+	1. Perform the CAT Box preliminary set-up.
+	2. Set the CAT Box switches as follows:
+		a. BYTES: 256
+		b. DBUS SOURCE: DATA
+		c. R/W(not) MODE: OFF
+		d. CHECKSUM SWITCH: ON
+	3. Key in the address pattern given in Table __.
+	4. Set the R/W(not) MODE switch to PULSE and then back to (OFF).
+	5. Check the CAT Box ADDRESS/SIGNATURE display for the
+	   appropriate checksum.
+	6. Repeat parts 3 through 5 for each address listed in Table __.
+
+___________________________________________________________________________________________________________________________________
+
+Table __
+__________________________________________________________________________________
+ADDRESS		ROM TESTED	LOCATION	CHECKSUM	      NOTE
+__________________________________________________________________________________
+6000		ROM 0		   1F					1
+7000		ROM 0		   1F					1
+6000		ROM 0		   1F					2
+7000		ROM 0		   1F					2
+8000		ROM 1		   1H/J
+9000		ROM 1		   1H/J
+A000		ROM 2		   1J/k
+B000		ROM 2		   1J/K
+C000		ROM 3		   1K/L
+D000		ROM 3		   1K/L
+E000		ROM 4		   1M
+F000		ROM 4		   1M
+
+	1. MPAGE must be low (Press Main Board Reset if it is not).
+	2. MPAGE must be High (Use the CAT Box to write 80 [data] to 4684 [address] if it is not).
+ 
+___________________________________________________________________________________________________________________________________
+G. Option Switch Inputs
+	1. Perform the CAT Box preliminary set-up.
+	2. Set CAT Box switches as indicated:
+		a. BYTES: 1
+		b. R/W(not): READ
+	3. For each address in the folowing Table, do the following:
+		a. Set R/W(not) MODE to (OFF).
+		b. Enter the address with the keyboard.
+		c. Set R/W(not) MODE to STATIC
+		d. Activate the input switch indicated in Table 4 for the address.
+
+-------------------------------------------------------------------------------------------------
+TABLE
+
+ADDRESS		INPUT SWITCHES		TEST RESULTS
+
+4300		Left Fire/Start		DATA display changes when any of these
+		Right Fire Start	switches is activated.
+		Self-Test
+		Coin Aux
+		Coin L
+		Coin R					
+
+4320		Left Thumb		DATA display changes when any of these
+		Right Thumb		switches is activated.
+		Diagn.					
+
+4340		Option Switch 		DATA display changes when any of these
+		at 10D			switches is activated.
+				
+
+4360		Option Switch		DATA display changes when any of these
+		at 10E/F		switches is activated.
+-------------------------------------------------------------------------------------------------
+
+If tests A - G are sucessful, then there should be enough of the game processor system
+working to perform self-test and diagnostics.
+
+Fortunately, much of the circuitry on the Main Board is composed of the
+Matrix Processor and Divider which do not need to work in order for the
+Main Board to test the AVG Board.
+USING THE CAT BOX WITH THE SOUND BOARD:
+
+A. CAT Box Preliminary Set-Up
+	1. Turn off the electrical power to the game.
+	2. Remove the wiring harness from the RFI Shield Board.
+	3. Disengage the fasteners holding the RFI Shield Board to the RFI Cage
+	   by pulling the pins out a short distance.
+	4. Remove the PCB game assembly from the Cage.
+	5. Connect the harness from the game to the RFI Shield Board edge connectors.
+*	6. Connect the WDDIS(not) test point to ground.
+	7. There are two different ways that the CATBOX can be connected 
+	   to the Sound Board.
+
+		a) Use the 6809E CAT Box Adapter where the CAT Box is plugged
+		   into the Adapter, the 68B09E is removed from its socket,
+		   and the Adapter Cable Type 1 is plugged into the 68B09E 
+		   socket.
+
+		b) Use the 6809E CAT Box Adapter in which the CAT Box is plugged
+		   into the Adapter, the 68B09E is left in place, and the
+		   the Adapter Cable Type 2 is clipped over the 68B09E.
+		   (Observe Pin 1 Polarity). This puts the 68B09E in the HALT mode, 
+		   putting the address, data, and R/W lines into the high impedance 
+		   state, making it unnecessary to remove the processor from the socket 
+		   unless you suspect that it is defective. The processor may be removed 
+		   if desired. 
+
+	8.  Apply power to the game and to the CAT Box.
+	9.  Set CAT Box switches as indicated:
+	    a. TESTER SELF-TEST: OFF
+	    b. TESTER MODE: R/W(not)
+	10. Press TESTER RESET	
+
+
+B. ADDRESS LINES
+
+	1.  Perform the CAT Box preliminary set-up.
+	2.  Connect the DATA PROBE to the CAT Box.
+	3.  Connect the DATA PROBE ground clip to a ground test point on the Sound Board.
+	4.  Set the CAT Box switches as indicated:
+	    a. BYTES:1
+	    b. PULSE MODE:UNLATCHED
+	    c. R/W(not) MODE:(OFF)
+	    d. R/W(not):WRITE
+	5.  Key in the address pattern given in Table 1 (use AAAA to start) with
+	    the CAT Box keyboard.
+	6.  Press DATA SET
+	7.  Key in AA
+	8.  Set R/W(not) MODE:STATIC
+	9.  Probe the IC-pin with the DATA PROBE and check that the 1 or 0 LED
+	    indicated in Table 1 lights up. Repeat this step for each address
+	    line listed in Table 1.
+	10. Repeat parts 4-C through 9 using address 5555 in part 5 and
+	    data 55 in part 7.
+
+C. Data Lines
+	1. Perform the CAT Box preliminary set-up.
+	2. Connect the DATA PROBE to the CAT Box.
+	3. Connect the DATA PROBE ground clip to a ground test point on the Sound Board.
+	4. Set the CAT Box switches as indicated:
+	   a. BYTES:1
+	   b. R/W(not):(OFF)
+	   c. R/W(not):WRITE
+	5. Key in address 0000 with the keyboard
+	6. Press DATA SET
+	7. Key in data AA with the keyboard
+	8. Set R/W(not) MODE to PULSE and back to (OFF)
+	9. Probe the IC-pin with the DATA PROBE and check that the 1 or 0 LED
+	   indicated in Table 2 lights up. Repeat this check for each IC-pin
+	   in Table 2.
+
+D. Program RAM
+	1. Perform the CAT Box preliminary set-up.
+	2. Set CAT Box switches as indicated:
+	   a. DBUS SOURCE:ADDR
+	   b. BYTES:1024
+	   c. R/W(not) MODE:(OFF)
+	   d. R/W(not):WRITE
+	3. Enter address 2000 with the keyboard
+	4. Set R/W(not) MODE to PULSE and back to (OFF).
+	5. Set R/W(not):READ
+	6. Set R/W(not) MODE to PULSE and back to (OFF).
+	7. The Program RAM is a 2K*8 device. To test the entire device 
+	   perform steps 2 through 6 with the address in step 3 at 2400.
+	   There is also 128 bytes of RAM in the 6532, starting at 1000.
+	8. If the CAT Box reads an address that doesn't match with that
+	   written, the COMPARE ERROR LED will light up.  
+
+E. Program ROM SIGNATURE ANALYSIS:
+	1. Perform the CAT Box preliminary set-up.
+	2. Connect Catbox SA GROUND to Sound Board.
+	3. Connect Catbox SA START to 6809E CAT Box Adapter Board CATBOX SA START/STOP.
+	4. Connect Catbox SA STOP to 6809E CAT Box Adapter CATBOX SA START/STOP.
+	5. Connect Catbox SA CLK to Sound Board CLK E.
+	6. Connect 6809E CAT Box Adapter GAME BOARD SA START/STOP to Sound Board ROM 1 (1H).
+	7. Set up the Signature Analzer: START-negative, STOP-positive.
+	8. Momentarily press RESET on Main Board
+	9. Compare signatures to those shown on the schematic
+
+F. Troubleshooting With Checksums
+		____________________________________________________
+		| Note: This procedure can only be done with those |
+		|       CAT Boxes equipped with a Checksum switch. |
+		|__________________________________________________|
+
+	1. Perform the CAT Box preliminary set-up.
+	2. Set the CAT Box switches as follows:
+		a. BYTES: 256
+		b. DBUS SOURCE: DATA
+		c. R/W(not) MODE: OFF
+		d. CHECKSUM SWITCH: ON
+	3. Key in the address pattern given in Table __.
+	4. Set the R/W(not) MODE switch to PULSE and then back to (OFF).
+	5. Check the CAT Box ADDRESS/SIGNATURE display for the
+	   appropriate checksum.
+	6. Repeat parts 3 through 5 for each address listed in Table __.
+
+___________________________________________________________________________________________________________________________________
+
+Table __
+__________________________________________________________
+ADDRESS		ROM TESTED	LOCATION	CHECKSUM
+__________________________________________________________
+4000		ROM 0		  1J/K 
+5000		ROM 0		  1J/K
+6000		ROM 1		  1H
+7000		ROM 1		  1H
+
+AVG SIGNATURE ANALYSIS	
+
+
+1. Put the game in Self-Test.
+2. On the Main Board, ground the DIAGN Test Point.
+3. Set up Diagnostic Test #9, AVG Signature Analysis:					Option Switch 10 E/F
+
+										 7    6    5    4    3    2    1    0
+										--------------------------------------
+										 on   on  off  off  off  on   on   off
+
+4. Perform the CAT Box preliminary set-up.
+5. Connect CAT Box SA GROUND to AVG Board ground.
+6. Connect CAT Box SA START to VRAM1(not) [2K-pin 2].
+7. Connect CAT Box SA STOP to VRAM1(not) [2K-pin 2]. 
+8. Connect CAT Box SA CLK to the SACLK Test Point on the AVG Board.
+9. Set up the Signature Analyzer: 
+	a. START: negative
+	b. STOP: positive
+	c. CLOCK: negative
+10. On the AVG Board, ground the test point marked SA.  
+11. Press Main Board Reset
+12. Compare signatures to those shown on the schematic.
+
+NOTE: 	This initializes the Vector RAM and prevents resets. If the Vector RAM loses its data during
+	Signature testing (due to the DATA PROBE shorting together two or more leads) press the
+	Main Board Reset switch.
+
+	During Signature Analysis the normal execution of vector instructions is changed so that the
+	Vector Address Controller increments the Vector Address after every cycle. Vector Halt
+	instructions are also ignored.
+
+	The State Machine feedback is disconnected, and instead, the State Machine PROM is driven by 
+	the Vector Address bus. This causes the State PROM to cycle sequentially through its addresses
+	rather than be dependent upon the particular vector instruction being executed. In this way
+	the data from the Vector Memory does not affect the signatures generated by the State Machine
+	so that malfunctioning circuits can be located more easily.
+
+
+the end
+
+
+
+                                                                                                                                                                                                                                                                                                                  

@@ -1,0 +1,363 @@
+KIM::SYS$USERDISK:[MARGOLIN.SW]SWSIG.DOC
+
+STAR WARS - DESCRIPTION OF SIGNAL NAMES
+
+Jed Margolin 
+
+5/1/83
+
+-------------------------------------------------------------------------------
+MAIN BOARD
+
+Bus Signals:
+	D0-D7		Main Processor Data Bus (Unbuffered)
+	DB0-DB7		Main Processor Data Bus (Buffered), used for
+			Matrix Multiplier and Divider.
+	PD0-PD7		Main Processor Data Bus (Buffered), used for
+			AVG and Sound Boards.
+
+	AB0-AB13	Main Processor Address Bus (Buffered), used on Main Board
+			and  on AVG and Sound Boards.  
+	A14,A15		Main Processor Address Bus (Unbuffered)
+
+	R/W(not)	Main Processor Read/Write(not), Unbuffered 
+	R(not)/WB	Main Processor Read(not)/Write, Buffered
+	R/W(not)B	Main Processor Read/Write(not), Buffered
+	WE(not)		Write Enable (R/W and'ed with 1.5 MHz)
+
+Clocks:
+	12 MHz	
+	6 MHz	
+	3 MHz	
+	1.5 MHz	
+	CLK E		1.5 MHz for Main Processor 
+	CLK Q, ECLK Q	1.5 MHz Quadrature Clock for Main and Sound Processors (Goes to Interconnect)
+	PHASE 2		1.5 MHz for CAT BOX only
+	750 KHz		
+
+	E12 MHz		Buffered 12 MHz (Goes to Interconnect)		
+	E6 MHZ		Buffered 6 MHz (Goes to Interconnect)
+	E3 MHz		Buffered 3 MHz (Goes to Interconnect)
+	E1.5 MHz	Buffered 1.5 MHz (Goes to Interconnect)
+
+
+
+PCLR(not)	Power Clear, causes a hardware reset during power up or power down.
+
+WDDIS(not)	Watch Dog Disable, disables the Watch Dog Timer (may be used during some hardware tests).
+
+RESET(not)	Resets the game, generated either by Power Clear (during power up or down) or by Watchdog 
+		Timer if program gets lost and fails to clear Watchdog before it times out. 
+
+ROM 0(not) - ROM 4(not)  Address Enables for Program ROMs
+
+EVMEM(not)	Address Enable for Vector Generator Memory
+
+MBRAM(not)	Address Enable for Math Box RAM
+
+RAM(not)	Address Enable for Program RAM
+
+OUTS(not)	Address Enable for Output Decoder
+ 
+	NSTORE(not)	Store pulse for Non-Volatile Memory, causes contents of Shadow Ram to be
+			stored in the non-volatile array ,(shadow ram and non-volatile array
+			are both contained in the NOVRAM). This happens automatically each time 
+			the game is turned off and is also under program control.						
+
+	SOUNDRST(not)	Hardware Reset for Sound Board. This line is made low by the Reset Switch 
+			or the Watchdog Timer (if it times out), and is also under software control.
+
+	OLATCH(not)	Strobe for Output Latch
+	
+			RECALL(not)	Recalls non-volatile array into shadow ram (NOVRAM)
+
+			PRNGCLR(not)	Clears Pseudo-Random Number Generator
+
+			COIN COUNTER 1
+
+			COIN COUNTER 2
+	
+			MPAGE		selects upper or lower 8K segment of ROM 0
+
+	IRQCLR(not)	Clears the Interrupt Timer (done during each interrupt under software control)
+	
+	WDCLR(not)	Watch-Dog Clear; The  program must generate this signal occasionally or
+			the Watch Dog Timer will reset the game.
+
+	EVGRST(not)	Hardware Reset for AVG Board. This line is made low by the Reset Switch or the Watchdog Timer
+			(if it times out), and is also under software control. 
+
+	EVGGO(not)	Starts the AVG.
+
+	ADCSTART(not)	Starts the Analog-to-Digital Converter
+
+NOVRAM(not)	Address Select for Non-Volatile Memory (Shadow RAM section)
+
+SOUND(not)	Address Select for Sound Board
+
+SW(not)		Address Select for Switch inputs and A/D Converter
+
+	ADC(not)	Read Analog-to-Digital Converter 
+			
+	OPT 1(not)	Read Option Switch 1
+
+	OPT 0(not)	Read Option Switch 0
+	
+	IN 1(not)	Read Input 1
+
+			MATH RUN		Math Box Run Flag
+
+			VGHALT			Vector Generator  Halt(ed) Flag
+
+			LEFT THUMB		Player Switch
+
+			RIGHT THUMB		Player Switch
+
+			SPARE 2			not used
+
+			DIAGN.			Ground this test pin to enter the hardware diagnostic routines.
+			
+	IN 0(not)	Read Input 0
+
+			LEFT FIRE/START		Player Switch
+
+			RIGHT FIRE/START	Player Switch
+
+			SPARE 1			not used
+
+			SELF-TEST		Operator Switch to enter self-test mode
+
+			SLAM			Slam Switch (not installed)
+
+			COIN AUX		Operator Coin Switch on Self-Test panel
+
+			COIN L			Coin Switch in Left Coin Mech
+
+			COIN R			Coin Switch in Right Coin Mech			
+
++5EAROM		+5VDC For the NOVRAM, derived from +12V to ensure adequate hold time during power down.
+
+PITCH		Pot input from player control
+
+YAW		Pot input from player control
+
+THRUST		Pot input (not used)
+
+MBCON(not)	Address Enable for Math Box Control Addresses and for Divider
+													
+
+	MW0(not)	Matrix Processor Program Counter
+
+	MW1(not)	Matrix Processor Block Index Counter High Byte
+
+	MW2(not)	Matrix Processor Block Index Counter Low Byte
+
+	PRNG(not)	Read Pseudo-Random Number Generator (not actually part of Math Box)
+
+	DVSRH(not)	Divisor High Byte
+
+	DVSRL(not)	Divisor Low Byte
+
+	DVDDH(not)	Dividend High Byte
+
+	DVDDL(not)	Dividend Low Byte
+	
+	REH(not)	Read Divider Quotient High Byte
+
+	REL(not)	Read Divider Quotient Low Byte
+
+	DD0 - DD15	Divider Data Bus
+
+	DS0, DS1	determine whether Dividend Shift Register loads, shifts, or does nothing
+
+  	REN(not)	Divider Run Flag
+
+
+	3MHz*		3MHz clock derived from Divider Control Timer
+
+	 The STAR WARS Divider is an unsigned 15 bit fractional divider which assumes
+	 that the dividend (the numerator) is less than twice the Divisor (the
+	 denominator).
+	
+	 The hardware consists of a Dividend Latch, a Dividend Shift Register, an 
+	 inverting Divisor Latch, an Adder, a Difference Latch, a Quotient Shift
+	 Register with tri-state Buffer, and a Control Unit which includes the
+	 Divide Cycle Counter.
+	
+	 The Dividend Latch is written into by the 6809 and has two parts: Dividend
+	 Latch High Byte (DVDDH) and Dividend Latch Low Byte (DVDDL) The Dividend 
+	 Latch is not altered by the operation of the divider so it may be left at 
+	 its previous value if desired.
+	 
+	 The Divisor Latch is also written into by the 6809 and has two parts:
+	 Divisor High Byte (DVSRH) and Divisor Low Byte (DVSRL). DVSRH loads 
+	 the Divisor High Byte, clears the Quotient Shift Register, and loads the 
+	 Dividend Shift Register from the Dividend Latch. DVSRL loads the Divisor Low 
+	 Byte and starts the Divider.
+	
+	 Divider Operation: Subtract the Divisor from the Dividend in the Dividend 
+	 Shift Register and put the result in the Difference Latch. 
+
+		If the result of this subtraction is positive, the Carry (C16*) will 
+		be a '1'. Shift a '1' into the Quotient Shift Register and store the 
+		value from the Difference Latch into the Dividend Shift Register. 
+		(In a conventional divider algorithm the dividend shift register would
+		then be shifted	left, but here the output of the Adder is wired 
+		to the	Difference Latch already shifted left.)
+	
+		If the result of the subtraction is negative, the Carry (C16*) will
+		be a '0'. Shift a '0' into the Quotient Shift Register and shift the
+		Dividend Shift Register left once. The value in the Difference Latch
+		is otherwise ignored.
+	
+	 Do it 15 times. With a 3 Mhz clock it will take 5.0 uS.
+	
+	 The Quotient Shift Register is read by the 6809 as QUOH and QUOL. [REH(not) and REL(not)]
+		  
+
+
+Matrix Processor:
+
+	MPA0 - MPA7	Instruction PROM Program Counter Address
+	MPA8, MPA9	Instruction PROM page select
+	IP0 - IP15	Instruction PROM Data output
+
+	BIC0 - BIC8	Output of Block Index Counter
+	MA0 - MA10	Address Bus, Matrix Processor RAM
+	MDB0 - MBD15	Data Bus, Matrix Processor RAM
+
+	LDA(not)	Loads Register A from the Matrix Processor RAM
+
+	LDB(not)	Loads Register B from the Matrix Processor RAM
+
+	LDC(not)	Loads Register C from the Matrix Processor RAM and starts the Multiplier/Accumulator.
+				The Multiplier/Accumulator performs the operation:
+					ACC(new)= ACC(old) + (A-B)*C
+				This is used to implement the algorithms which produce
+				many of the 3-D effects.				
+
+	CLEARACC(not)	Clears the Accumulator
+
+	INCBIC(not)	Increments the Block Index Counter
+
+	MHALT(not)	Stops the Matrix Processor
+
+	LAC(not)	Loads the Accumulator from the Matrix Processor RAM
+
+	READACC(not)	Reads the Accumulator and stores it in the Matrix Processor RAM
+
+	DIRECT/INDEXED(not) Determines Matrix Processor Address mode
+			In the Direct Mode,  MA7 - MA10 are all 0, and MA0 - MA6 are connected to IP0 - IP6, 
+			thereby addressing the first 128 words in the Matrix Processor RAM.
+
+			In the Indirect Mode, MA2-MA10 are connected to the Block Index Counter (BIC0 - BIC7).
+			MA0, MA1 use IP0, IP1 to address the four locations in each of the 256 blocks
+			chosen by the Block Index Counter.
+
+	WP		Instruction Execution Strobe
+
+	S1,S2		Address Mode Select lines
+
+	MACFLAG(not)	Flag that stalls the Matrix Processor Program Counter during a Multiply/Accumulate
+	
+	
+
+-----------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------------------
+SOUND BOARD
+
+	SD0-SD7		Sound Processor Data Bus 
+
+	SA0-SA14	Sound Processor Address Bus
+
+	SR/W(not)	Sound Processor Read/Write
+
+	ROM 0(not)	Address enable for Sound ROM 0
+
+	ROM 1(not)	Address enable for Sound ROM 1
+
+	POKEY(not)	Address enable for Pokey Decoder. Pokey is an Atari custom sound IC.
+
+	PIA(not)	Address enable for 6532A. The 6532A contains two programmable bidirectional
+			ports, a programmable interrupt timer, and 128 bytes of RAM.
+
+	PA0-PA7		6532 Port A Input/Output lines
+
+	PB0-PB7		6532 Port B Input/Output lines
+
+	MAINFLAG	When the Main Board writes to its interface latch, the MAINFLAG is set, generating
+			a Sound Processor interrupt which tells it that there is new data waiting for it. 
+			When the Sound Board reads the latch, the MAINFLAG is reset, telling the Main Board 
+			that the interface is ready for more data.
+
+	SOUNDFLAG	When the Sound Board writes to its interface latch, the SOUNDFLAG is set, which
+			the Main Board can read to determine that there is new data waiting for it. When
+			the Main Board reads the latch, the SOUNDFLAG is reset, telling the Sound Board
+			that the interface is ready for more data.
+
+	666 kHz.	Clock for the Speech Synthesizer IC, swings between +5v and -5V.
+
+	SPEECH		Speech audio, unfiltered, about 2Vp-p.
+
+	SUM		Sum of speech and sound effects audio, unfiltered.
+
+	AUDIO		Filtered sum of speech and sounds effects audio.
+
+	LEFT AUDIO	Left Channel, synthesized stereo.
+
+	RIGHT AUDIO	Right Channel, synthesized stereo.	
+
+-----------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------------------
+AVG BOARD
+
+Clocks:
+	E1.5 MHz
+	E3 MHz
+	E6 MHz
+	E12 MHz
+
+EVGGO(not)	Starts the AVG
+
+EVGRST(not)	Resets the AVG, leaving the beam centered.
+
+EVMEM(not)	Address Enable from Main Board when Vector Memory is selected. If this occurs when the
+		Vector Generator State Machine wants to access Vector Memory, wait states will be
+		generated for the State Machine.
+
+VGHALT(not)	Tells the Main Board whether the Vector Generator is running or stopped.
+
+AB0 - AB13	Buffered Address Bus from the Main Board
+
+AVG0 - AVG13	Address produced by the Vector Address Controller
+
+AM0 - AM13	Address for the Vector Memory, comes either from the Main Board or from the
+		Vector Address Controller.
+
+PD0 - PD7	Buffered Data Bus from the Main Board
+
+DVG0 - DVG7	Internal Vector Generator Data Bus. During VMEM(not) the data is normally supplied
+		by the Main Board. During Vector Generator operation data (which includes the
+		actual vector instructions) is supplied by the Vector Memory.
+
+
+DVY0 - DVY7	Fetched from Vector Memory and latched by LATCH 0(not)
+DVY8 - DVY12	Fetched from Vector Memory and latched by LATCH 1(not)
+OP0 - OP2	Fetched from Vector Memory and latched by LATCH 2(not), 
+		Contains the opcode for the current vector instruction
+
+DVX3 - DVX7	Fetched from Vector Memory and latched by LATCH 2(not)
+DVX8 - DVX12	Fetched from Vector Memory and latched by LATCH 3(not)
+Z0-Z2		Fetched from Vector Memory and latched by LATCH 3(not)
+		When a vector is drawn, Z0 - Z2 is strobed into a latch
+		which serves as a simple Digital-to-Analog Converter.
+
+When the opcode calls for a vector to be drawn, DVX3-DVX12 and DVY3-DVY12 are
+normalized which means that they are both scaled up until one of them is as
+large as it can be without overflowing its register. At the same time the
+Vector Timer is scaled down by an equal factor. This is done so that the
+time spent drawing a vector is roughly proportional to its length.
+
+For other opcodes, DVY0-DVY12 and DVX0-DVX12 serve as temporary data latches
+until the data can be strobed into their proper destinations. 
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   

@@ -1,0 +1,399 @@
+TITLE: SWMP.DOC
+
+MATH BOX PROGRAM DOCUMENTATION FOR PCB HARDWARE VERSION REV A
+PROJECT: STAR WARS
+
+JED MARGOLIN    12/28/82
+	        10/20/82
+		12/13/82
+		 2/3/83
+		3/17/83
+------------------------------------------------------------
+Strange but true:
+	X is straight ahead, Z is up, and Y is to the right.
+
+	4000H = 1.0000 for sines and cosines
+
+	In the Multiplier, 4000H * 4000H = 4000H .
+
+------------------------------------------------------------
+
+ROLL - rolls three unit vectors starting at BIC (block index counter),  
+       performs rounding
+
+	The result is that afterwards, for the set of unit vectors selected:
+
+		Ay'= Ay*COS - Az*SIN + 1/2 LSB
+		Az'= Ay*SIN + AZ*COS + 1/2 LSB
+
+		By'= By*COS - Bz*SIN + 1/2 LSB
+		Bz'= By*SIN + Bz*COS + 1/2 LSB
+
+		Cy'= Cy*COS - Cz*SIN + 1/2 LSB
+		Cz'= Cy*SIN + Cz*COS + 1/2 LSB
+
+
+	SIN : SIN(a)
+	COS : COS(a)
+	BIC : beginning of object's unit vectors)
+	PC  : 00 (starts program)
+	TIME: 71 uS.
+
+
+------------------------------------------------------------
+PITCH - pitches three unit vectors starting at BIC (block index counter), 
+	performs rounding
+
+	The result is that afterwards, for the set of unit vectors selected:
+
+		Az'= Az*COS - Ax*SIN + 1/2 LSB
+		Ax'= Az*SIN + Ax*COS + 1/2 LSB
+
+		Bz'= Bz*COS - Bx*SIN + 1/2 LSB
+		Bx'= Bz*SIN + Bx*COS + 1/2 LSB
+
+		Cz'= Cz*COS - Cx*SIN + 1/2 LSB
+		Cx'= Cz*SIN + Cx*COS + 1/2 LSB
+
+	SIN : SIN(a)
+	COS : COS(a)
+	BIC : beginning of object's unit vectors)
+	PC  : 0E (starts program)
+	TIME: 71 uS.
+
+
+------------------------------------------------------------
+YAW - yaws three unit vectors starting at BIC (block index counter), 
+      performs rounding
+
+	The result is that afterwards, for the set of unit vectors selected:
+
+		Ax'= Ax*COS - Ay*SIN + 1/2 LSB
+		Ay'= Ax*SIN + Ay*COS + 1/2 LSB
+
+		Bx'= Bx*COS - By*SIN + 1/2 LSB
+		By'= Bx*SIN + By*COS + 1/2 LSB
+
+		Cx'= Cx*COS - Cy*SIN + 1/2 LSB
+		Cy'= Cx*SIN + Cy*COS + 1/2 LSB
+
+	SIN : SIN(a)
+	COS : COS(a)
+	BIC : beginning of object's unit vectors
+	PC  : 1C (starts program)
+	TIME: 71 uS.
+
+
+------------------------------------------------------------
+PRESUB  -  pre-subtract without automatic wrap-around, 
+	   Afterwards the BIC points to the next block
+
+	[XP] [AX1 BX1 CX1] [XIND-XT1]
+	[YP]=[AY1 BY1 CY1]*[YIND-YT1]
+	[ZP] [AZ1 BZ1 CZ1] [ZIND-ZT1]
+
+	BIC : block index number of point
+	PC  : 2A (starts program)
+	TIME: 37 uS, Afterwards the BIC points to the next block
+
+
+------------------------------------------------------------
+CONCAT - forms concatenation matrix for ship 1 to look at ship 2
+
+	[AX BX CX] [AX1 BX1 CX1] [AX2 AY2 AZ2]
+	[AY BY CY]=[AY1 BY1 CY1]*[BX2 BY2 BZ2]
+	[AZ BZ CZ] [AZ1 BZ1 CZ1] [CX2 CY2 CZ2]
+
+	PC : 40 (starts program)
+	TIME: 100 uS.
+
+
+------------------------------------------------------------
+POSTADD - Ship 1 looks at Ship 2
+
+	[XP] [AX BX CX] [XIND] [XT]
+	[YP]=[AY BY CY]*[YIND]+[YT]
+	[ZP] [AZ BZ CZ] [ZIND] [ZT]
+
+	BIC : block index number of point
+	PC  : 50 (starts program)
+	TIME: 35 uS, Afterwards the BIC points to the next block
+
+
+------------------------------------------------------------
+TEST1 - TEST9  - test routines
+
+
+------------------------------------------------------------
+POST2  - transforms point from ship 1 reference to Universe
+	
+	[XP] [AX1 AY1 AZ1] [XIND] [XT1]
+	[YP]=[BX1 BY1 BZ1]*[YIND]+[YT1]
+	[XP] [CX1 CY1 CZ1] [ZIND] [ZT1]
+
+	BIC : block index number of point to be transformed
+	PC  : 60 (starts program)
+	TIME: 35 uS, Afterwards the BIC points to the next block
+
+
+------------------------------------------------------------
+PRE2 - Presubtract 2: Ship 1 looks at the Universe; Wrap-around is automatic;
+       Squared, scaled, and squared scaled results are available.
+
+	XT = (XIND-XT1)/2
+	YT = (YIND-YT1)/2
+	ZT = (ZIND-ZT1)/2
+
+	[XP] [AX1 BX1 CX1] [XT]
+	[YP]=[AY1 BY1 CY1]*[YT]
+	[ZP] [AZ1 BZ1 CZ1] [ZT]
+
+	XSCALE'= XP * SCALE     (zoom lens)
+	XCS    = XSCALE * XSCALE
+
+	XPS = XP * XP
+	YPS = YP * YP
+	ZPS = ZP * ZP
+
+	BIC : block index number of point to be transformed
+	PC  : 67 (starts program)
+	TIME: 72 uS, Afterwards the BIC points to the next block
+
+
+------------------------------------------------------------
+DNLD1 - download the matrix starting at BIC to SHIP 1 Unit Vectors
+	
+	BIC : block index of matrix to be downloaded 
+	PC  : 77 (starts program)
+	TIME : 10 uS.
+
+
+------------------------------------------------------------
+DNLD2 - downloads the matrix starting at BIC to SHIP 2 Unit Vectors
+
+	BIC : block index of matrix to be downloaded
+	PC  : 80 (starts program)
+	TIME: 10 uS.
+
+
+------------------------------------------------------------
+PERS  -  Perspective Multiply
+
+	XP is inverse X (the distance straight ahead, along X)
+	
+	YP = YP * XP      (SCREEN X)
+	ZP = ZP * XP      (SCREEN Y)
+
+	PC  : 86 (starts program)
+	TIME: 7.3 uS
+
+____________________________________________________________
+
+HZN - Horizon Line
+
+	PX = AX*AX + BX*BX
+
+	PC  : 88 (starts program)
+	TIME: 7.9 uS
+
+-------------------------------------------------------------
+
+HZN2 - Continuation of Horizon
+
+	T = (AX*AX+BX*BX) * T
+	TBX = T*BX1
+	TAX = T*AX1
+	PZ1 = (AX1-TBX)*AZ1 + (BX1-TAX)*BZ1
+	PY1 = (AX1-TBX)*AY1 + (BX1+TAX)*BY1
+	PZ2 = (AX1+TBX)*AZ1 + (BX1-TAX)*BZ1
+	PY2 = (AX1+TBX)*AY1 + (BX1-TAX)*BY1
+
+	PC  : 8A
+	TIME: 58.8 uS
+
+----------------------------------------------------------
+
+AERO - Aerodynamics (Fixed Wing)
+
+	THRUST = THRUST * K1			(scale thrust)
+	QW = - VX*AZ1 - VY*BZ1 - VZ*CZ1		(wind normal to the wing)
+	FX = THRUST*AX1 + PDR*VX + QW*AZ1
+	FY = THRUST*BX1 + PDR*VY + QW*BZ1
+	FZ = THRUST*CX1 + PDR*VZ + QW*CZ1 + GRAV
+
+	PC  : 95
+	TIME: 49.2 uS
+
+------------------------------------------------------------
+
+CPTR - Aerodynamics (Helicopter 1)
+
+	THRUST = THRUST * K1
+	FX = THRUST*AZ1 + PDR*VX
+	FY = THRUST*BZ1 + PDR*VY
+	FZ = THRUST*CZ1 + PDR*VZ + GRAV
+
+	PC  : 9E
+	TIME: 27.2 uS
+
+-----------------------------------------------------------
+
+CPTR2 - Aerodynamics (Helicopter 2 - Rotor acts as a wing) 
+
+	THRUST = THRUST * K1
+	QW = - VX*AZ1 - VY*BZ1 - VZ*CZ1
+	FX = THRUST*AZ1 + PDR*VX + QW*AZ1
+	FY = THRUST*BZ1 + PDR*VY + QW*BZ1
+	FZ = THRUST*CZ1 + PDR*VZ + QW*CZ1 + GRAV
+
+	PC  : A3
+	TIME: 49.6 uS
+
+----------------------------------------------------------
+
+ASPEED - Dot Product of Velocity and X Unit Vector
+
+	ASPD = VX*AX1 + VY*BX1 + VZ*CX1
+
+	PC  : AC
+	TIME: 8.1 uS
+
+-----------------------------------------------------------
+
+PER2 - Perspective Multiply for Terrain Objects
+
+	XS,IND = (YR,IND - (-YP)) * YT
+	YS,IND = (ZR,IND - (-ZP)) * YT
+	(IBC)
+PER2I   XT = (XR,IND - (-XP)) * ONE
+
+	BIC : as required
+	PC  - PER2 : AE
+	    - PER2I: B0
+	TIME- PER  : 8.73 uS
+	    - PER2I: 4.37 uS
+	    - total: 13.1 uS
+
+_______________________________________________________________________________
+The 6809 sees 4K*8 (High,Low) and the matrix processor sees 2K*16.
+
+In the matrix processor, the first 128 words are directly addressible
+by the microcode; its other addressing mode is as 512 blocks of
+4 words each.
+_______________________________________________________________________________
+MATH BOX MEMORY MAP AS SEEN BY 6809 (ALL ARE HIGH BYTE, LOW BYTE)
+
+5000 - XP	00	TRANSFORMED POINT
+     - PDR	00	PARASITIC DRAG (NEGATIVE)
+5002 - YP	01	TRANSFORMED POINT
+     - K1	01	THRUST CONSTANT
+5004 - ZP	02	TRANSFORMED POINT
+5006 - AX	03	UNIT VECTORS USED IN POSTADD, COMES FROM CONCATENATE
+5008 - AY	04		"
+500A - AZ	05		"
+500C - BY	06		"
+500E - BY	07		"
+5010 - BZ	08		"
+5012 - CX	09		"
+5014 - CY	0A		"
+5016 - CZ	0B		"
+5018 - XT	0C	TRANSLATION VALUES USED IN POSTADD
+501A - YT	0D		"
+501C - ZT	0E 		"
+501E - ZERO	0F	SET TO 0000
+5020 - ONE	10	SET TO 4000
+5022 - SIN	11
+5024 - COS	12
+5026 - HALF	13	FOR PRE2, SET TO E000 (actually -1/2)		 
+5028 - AX1	14	SHIP 1 UNIT VECTORS, INITIALISE TO IDENTITY MATRIX   (BLOCK 05)
+502A - AY1	15		"
+502C - AZ1	16		"
+502E - VX	17 	VELOCITY X  
+5030 - BX1	18	SHIP 1 UNIT VECTORS
+5032 - BY1	19		"
+5034 - BZ1	1A		"
+5036 - VY	1B	VELOCITY Y
+5038 - CX1	1C	SHIP 1 UNIT VECTORS
+503A - CY1	1D		"
+503C - CZ1	1E		"
+503E - VZ	1F	VELOCITY Z
+5030 - XT1	20	SHIP 1 POSITION
+5042 - YT1	21		"
+5044 - ZT1	22		"
+5046 - FX	23	FORCE X
+5048 - AX2	24	SHIP 2 UNIT VECTORS, INITIALISE TO IDENTITY MATRIX   (BLOCK 09)
+504A - AY2	25		"
+504C - AZ2	26		"
+504E - FY	27	FORCE Y
+5050 - BX2	28	SHIP 2 UNIT VECTORS
+5052 - BY2	29		"
+5054 - BZ2	2A		"
+5056 - FZ	2B	FORCE Z
+5058 - CX2	2C	SHIP 2 UNIT VECTORS
+505A - CY2	2D		"
+505C - CZ2	2E		"
+505E - THRUST	2F
+5060 - XT2	30	SHIP 2 POSITION
+5062 - YT2	31		"
+5064 - ZT2	32		"
+5066 - GRAV     33
+5068 - C40	34	FOR ROUNDING, SET TO 0040
+506A - C80	35	FOR ROUNDING, SET TO 0080
+506C - SCALE	36
+506E - XSCALE	37	RESULTS, XSCALE=XP*SCALE
+5070 - XPS	38	RESULTS, XP*XP
+     - PZ1	38	HORIZON Z1
+5072 - YPS	39	RESULTS, YP*YP
+     - PY1	39	HORIZON Y1
+5074 - ZPS	3A	RESULTS, ZP*ZP
+     - PZ2	3A	HORIZON Z2
+5076 - XCS	3B	RESULTS, XCS=XSCALE*XSCALE
+     - PY2	3B	HORIZON Y2
+5078 - QW	3C	WIND VELOCITY NORMAL TO WING
+     - PX	3C	HORIZON, X
+507A - T	3D	HORIZON, LENGTH OF LINE , TAN(YA/XA)
+507C - TAX	3E	HORIZON, T*AX
+507E - TBX	3F	HORIZON, T*BX
+     - ASPD	3F	AIRSPEED
+5080 - 50FF     40-7F	directly addressible but not yet used
+5100 - 5FFF	not directly addressible			BLOCKS 20 - 1FF
+
+BLOCKS 10-1FF ARE UNCOMMITTED.
+
+WITHIN THE INDEXED BLOCK:
+
+	X =  00
+	Y =  01
+	Z =  02
+
+	YR = 00
+	ZR = 01
+	XS = 02
+	YS = 03
+	
+
+MATH BOX CONTROL ADDRESSES:
+
+4320 - D7 R     MATH RUN - (MATRIX PROCESSOR IS BUSY)
+
+4700 	R	REH - QUOTIENT HIGH BYTE
+4700    W       MW0 - LOAD MATRIX PC AND START
+
+4701	R	REL - QUOTIENT LOW BYTE
+4701	W	MW1 - LOAD BLOCK INDEX COUNTER HIGH
+
+4702	W	MW2 - LOAD BLOCK INDEX COUNTER LOW
+
+4703	R	PRNG - READ PSEUDO RANDOM NUMBER GENERATOR
+
+4704	W	DVSRH - LOAD DIVISOR HIGH BYTE, CLEAR QUOTIENT,
+		        AND LOAD DIVIDEND SHIFT REGISTER FROM DIVIDEND LATCH
+
+4705	W	DVSRL - LOAD DIVISOR LOW BYTE, AND START
+
+4706	W	DVDDH - LOAD DIVIDEND LATCH HIGH BYTE
+
+4707	W	DVDDL - LOAD DIVIDEND LATCH LOW BYTE
+
+the end
+                              

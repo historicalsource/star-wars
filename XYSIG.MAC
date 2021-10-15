@@ -1,0 +1,217 @@
+
+
+    1      	        .TITLE XYSIG: COLOR XY SIGNITURE ANALASIS
+    2      	;
+    3      	; PROGRAMMER:   BRIAN MCGHIE
+    4      	;
+    5      	; HARDWARE:     SPACE DUEL XY COLOR GRAPHICS BOARD
+    6      	;
+    7      	; DATE STARTED: NOVEMBER 3, 1981
+    8      	;
+    9      	; DESCRIPTION:    THE VECTOR GENERATOR DIAGNOSTIC PROGRAM IS CONTROLLED
+   10      	;               BY THE BANK OF OPTION SWITCHES LOCATED AT P10 ON THE
+   11      	;               PC BOARD.  TO EXIT THIS TEST, PRESS THE RESET BUTTON
+   12      	;               ON THE CONTROL PANEL
+   13      	;
+   14      	;                 THERE ARE TWO PHASES TO THIS DIAGNOSTIC PROGRAM.  FIRST,
+   15      	;               IS TEST ZERO, WHICH WRITES A ZERO TO THE FIRST LOCATION IN
+   16      	;               THE V.G. RAM. THEN WRITES A 5 TO THE SECOND, AN A TO THE
+   17      	;               THIRD, ETC. ADDING FIVE TO EVERY LOCATION THROUGH THE VECTOR
+   18      	;               RAM.  THIS IS DONE SO THAT SIGNITURES CAN BE TAKEN TO LOCATE
+   19      	;               PROBLEMS. THE SECOND PHASE CONSISTS OF THE REMAINING TESTS.
+   20      	;               TEST 1 CHECKS THE HALT INSTRUCTION, TEST 2 CHECKS THE LONG
+   21      	;               VECTOR INSTRUCTION AND THE HALT INSTRUCTION, TEST 3 ADDS THE
+   22      	;               JUMP INSTUCTION, ETC. UNTIL ALL POSSIBLE VECTOR INSTRUCTIONS
+   23      	;               HAVE BEEN ADDED IN. (SEE LIST BELOW)
+   24      	;                 
+   25      	;                 THE INDIVIDUAL TESTS AVAILABLE, ARE CONTROLLED WITH
+   26      	;               OPTION SWITCHES 2, 3, AND 4.  SWITCH 1 IS IGNORED.
+   27      	;               THE TESTS ARE AS FOLLOWS:
+   28      	;
+   29      	;          SWITCH# 1   2   3   4                ( LOCATED AT P10 )
+   30      	;       TEST 0 - OFF OFF OFF OFF        DO NOTHING BUT HIT WATCHDOG
+   31      	;       TEST 1 - OFF OFF OFF  ON        TEST VG HALT INSTRUCTION
+   32      	;       TEST 2 - OFF OFF  ON OFF        TEST VG LONG VECTOR INSTRUCTION
+   33      	;       TEST 3 - OFF OFF  ON  ON        TEST VG JUMP INSTRUCTION
+   34      	;       TEST 4 - OFF  ON OFF OFF        TEST VG SHORT VECTOR INSTRUCTION
+   35      	;       TEST 5 - OFF  ON OFF  ON        TEST VG JSRL/RTSL INSTRUCTIONS
+   36      	;       TEST 6 - OFF  ON  ON OFF        DEFAULTS TO TEST 1
+   37      	;       TEST 7 - OFF  ON  ON  ON        DEFAULTS TO TEST 1
+   38      	;
+   39      	        .INCLUDE VGMC
+   40      	        .INCLUDE HLL65F
+   41      	        .PAGE
+   42      	        .ASECT
+   43      	        .RADIX 16
+   44      	        .ENABLE AMA
+   45      	ZERO    =00                     ; USED AS A CONSTANT
+   46      	        IN1=8000 
+   47      	VGRAM   =2000                   ; ADDRESS OF VECTOR GENERATOR RAM
+   48      	VGRAML  =08                     ; LENGTH OF VG RAM IN PAGES
+   49      	WATCHDOG=8980                   ; ADDRESS OF WATCHDOG TIMER
+   50      	VGMASK  =40
+   51      	VGHLT   =7800
+   52      	VGGO    =8840
+   53      	VGRST   =8880
+   54      	CONST   =05
+   55      	        .GLOBL POWERON
+
+
+   56      	        .=0
+   57      	RAML:
+   58      	TSTNUM: .BYTE 0
+   59      	CNT:    .BYTE 0
+   60      	PRVSW:  .BYTE 0
+   61      	ZPA:    .WORD 0
+   62      	EXIT:   .BYTE 0
+   63      	        .CSECT XYSIG
+   64      	XYINIT:: SEI
+   65      	          CLD
+   66      	          LDA I,0FF
+   67      	          STA PRVSW
+   68      	          BNE 2$
+   69      	1$:     LDA TSTNUM
+   70      	        IFNE
+   71      	          LDA VGHLT
+   72      	          AND I,VGMASK
+   73      	        IFNE
+   74      	          STA VGRST
+   75      	          STA VGGO
+   76      	        ENDIF
+   77      	        ENDIF
+   78      	2$:     STA WATCHDOG
+   79      	        LDA VGHLT               ; IF SELF TEST SWITCH IS TURNED OFF, EXIT
+   80      	        AND I,10
+   81      	        IFNE
+   82      	        JMP POWERON
+   83      	        ENDIF
+   84      	        LDA IN1
+   85      	        CLC
+   86      	        ROL
+   87      	        ROL
+   88      	        ROL
+   89      	        ROL
+   90      	        EOR I,0FF
+   91      	        AND I,7
+   92      	        STA TSTNUM
+   93      	          LDA TSTNUM
+   94      	          CMP PRVSW             ; COMPARE CURRENT TEST NUMBER WITH PREVIOUS
+   95      	         BEQ 1$
+   96      	          STA PRVSW
+   97      	          TAX                   ; THIS CODE LOADS TEST AND RETURNS TO 1$
+   98      	         BEQ 7$
+   99      	          LDA I,0C7
+  100      	          STA VGRAM
+  101      	          LDA I,60
+  102      	          STA VGRAM+1
+  103      	          LDY X,ADDR
+  104      	          LDA X,LGTH
+  105      	          TAX
+  106      	3$:     LDA Y,TEST1
+  107      	          STA X,VGRAM+2
+  108      	          DEY
+  109      	          DEX
+  110      	         BPL 3$
+
+
+  111      	5$:       STA VGRST
+  112      	        JMP 1$
+  113      	7$:     LDA I,20
+  114      	          STA ZPA+1
+  115      	          LDA I,ZERO
+  116      	          STA ZPA
+  117      	          STA CNT
+  118      	          TAY
+  119      	          LDA I,VGRAML
+  120      	          STA RAML
+  121      	10$:    CLC
+  122      	          LDA CNT
+  123      	          STA NY,ZPA
+  124      	          ADC I,CONST
+  125      	          STA CNT
+  126      	          INY
+  127      	         BNE 10$
+  128      	          INC ZPA+1
+  129      	          DEC RAML
+  130      	          BNE 10$
+  131      	        LDY I,7
+  132      	        LDX I,0
+  133      	        LDA I,11
+  134      	        BEGIN
+  135      	        STA X,2780
+  136      	        STA X,2680
+  137      	        PHA
+  138      	        TXA
+  139      	        CLC
+  140      	        ADC I,10
+  141      	        TAX
+  142      	        PLA
+  143      	        DEY
+  144      	        MIEND
+  145      	        STA 26B2
+  146      	        STA 27B2
+  147      	        STA 26DE
+  148      	        STA 26EE
+  149      	        STA 27DE
+  150      	        STA 27EE
+  151      	        LDA I,80
+  152      	        STA 26FE
+  153      	        STA 27FE
+  154      	        JMP 5$
+  155      	ADDR:   .BYTE   01, 01, 15, 2B  ;       TABLE OF ADDRESS OFFSETS
+  156      	        .BYTE   45, 71, 01, 01
+  157      	LGTH:   .BYTE   01, 01, 13, 15  ;       TABLE OF TEST LENGTHS MINUS ONE
+  158      	        .BYTE   19, 2B, 01, 01
+  159      	TEST1:  HALT
+  160      	TEST2:  CNTR
+  161      	        SCAL 1
+  162      	        VCTR 512., 384., 1
+  163      	        CNTR
+  164      	        .BYTE   00, 60          ; NO COLOR
+  165      	        VCTR -512., -384., 1
+
+
+  166      	        CNTR
+  167      	        HALT
+  168      	TEST3:  CNTR
+  169      	        SCAL 1
+  170      	        VCTR 512., 384., 1
+  171      	        .BYTE 07, 0E0           ; JMPL PASS HALT
+  172      	        HALT
+  173      	        CNTR
+  174      	        VCTR -512., -384., 1
+  175      	        CNTR
+  176      	        HALT
+  177      	TEST4:  CNTR
+  178      	        SCAL 1
+  179      	        VCTR 512., 384., 1
+  180      	        .BYTE 07, 0E0           ; JMPL PASS HALT
+  181      	        HALT
+  182      	        CNTR
+  183      	        VCTR -512., -384., 1
+  184      	        CNTR
+  185      	        VCTR 30., -30., 1
+  186      	        CNTR
+  187      	        HALT
+  188      	TEST5:  CNTR
+  189      	        SCAL 1
+  190      	        VCTR 512., 384., 1
+  191      	        .BYTE 07, 0E0           ; JMPL PASS HALT
+  192      	        HALT
+  193      	        CNTR
+  194      	        VCTR -512., -384., 1
+  195      	        CNTR
+  196      	        VCTR 30., -30., 1
+  197      	        CNTR
+  198      	        .BYTE 11, 0A0           ; FIRST LEVEL JSRL
+  199      	        VCTR 0, -30., 1
+  200      	        CNTR
+  201      	        HALT
+  202      	        .BYTE 13, 0A0           ; SECOND LEVEL JSRL
+  203      	        RTSL
+  204      	        .BYTE 15, 0A0           ; THIRD LEVEL JSRL
+  205      	        RTSL
+  206      	        VCTR 30., 0, 1
+  207      	        RTSL
+  208      	        .END
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                           
